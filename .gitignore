@@ -222,4 +222,4 @@ Temporary Items
 .apdisk
 
 
-# Project exclude paths
+*.bat

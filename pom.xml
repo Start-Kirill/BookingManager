@@ -13,6 +13,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.tomcat.url>http://localhost:8080/manager/text</maven.tomcat.url>
+        <maven.tomcat.server>TomcatServer10</maven.tomcat.server>
+        <maven.tomcat.path>/${project.build.finalName}</maven.tomcat.path>
     </properties>
 
     <dependencies>
@@ -29,6 +32,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
                 <configuration>
                     <webResources>
                         <resource>
@@ -37,6 +41,11 @@
                     </webResources>
                     <webXml>${basedir}/src/main/webapp/WEB-INF/web.xml</webXml>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.2</version>
             </plugin>
         </plugins>
     </build>
