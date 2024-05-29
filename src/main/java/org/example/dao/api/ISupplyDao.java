@@ -1,4 +1,6 @@
 package org.example.dao.api;
 
-public interface ISupplyDao {
+import org.example.core.entity.Supply;
+
+public interface ISupplyDao extends ICRUDDao<Supply> {
 }

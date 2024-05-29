@@ -1,4 +1,6 @@
 package org.example.dao.api;
 
-public interface IScheduleDao {
+import org.example.core.entity.Schedule;
+
+public interface IScheduleDao extends ICRUDDao<Schedule>{
 }

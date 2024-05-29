@@ -1,4 +1,6 @@
 package org.example.dao.api;
 
-public interface IUserDao {
+import org.example.core.entity.User;
+
+public interface IUserDao extends ICRUDDao<User> {
 }

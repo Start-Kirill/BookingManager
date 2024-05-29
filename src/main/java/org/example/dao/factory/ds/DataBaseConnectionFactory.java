@@ -1,10 +1,11 @@
-package org.example.dao.factory;
+package org.example.dao.factory.ds;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+
 
 public class DataBaseConnectionFactory {
 

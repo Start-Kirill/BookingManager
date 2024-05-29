@@ -1,5 +1,7 @@
 package org.example.service.factory;
 
+import org.example.dao.factory.UserDaoFactory;
+import org.example.service.UserService;
 import org.example.service.api.IUserService;
 
 public class UserServiceFactory {
@@ -13,7 +15,7 @@ public class UserServiceFactory {
         if (instance == null) {
             synchronized (UserServiceFactory.class) {
                 if (instance == null) {
-//                    TODO create user service
+                    instance = new UserService(UserDaoFactory.getInstance());
                 }
             }
         }

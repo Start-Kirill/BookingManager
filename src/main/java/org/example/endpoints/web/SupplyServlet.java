@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import org.example.service.api.ISupplyService;
+import org.example.service.factory.SupplyServiceFactory;
 
 @WebServlet("/supply")
 public class SupplyServlet extends HttpServlet {
@@ -13,7 +14,7 @@ public class SupplyServlet extends HttpServlet {
     private final ObjectMapper objectMapper;
 
     public SupplyServlet(ISupplyService supplyService, ObjectMapper objectMapper) {
-        this.supplyService = supplyService;
+        this.supplyService = SupplyServiceFactory.getInstance();
         this.objectMapper = objectMapper;
     }
 }

@@ -1,7 +1,7 @@
 package org.example.service.api;
 
-import org.example.core.SupplyCreateDto;
-import org.example.core.SupplyDto;
+import org.example.core.dto.SupplyDto;
+import org.example.core.dto.SupplyCreateDto;
 
-public interface ISupplyService extends ICRUDService<SupplyDto, SupplyCreateDto> {
+public interface ISupplyService extends ICRUDService<SupplyCreateDto, SupplyDto> {
 }
