@@ -64,7 +64,6 @@ public class SupplyServlet extends HttpServlet {
         UUID uuid = retrieveUserUuidAsPathVariable(req);
         LocalDateTime dtUpdate = retrieveDtUpdateAsPathVariables(req);
         if (uuid == null || dtUpdate == null) {
-//            TODO
             throw new IllegalArgumentException("Координаты отсутствуют или неверны");
         }
         ServletInputStream inputStream = req.getInputStream();
@@ -78,7 +77,6 @@ public class SupplyServlet extends HttpServlet {
         LocalDateTime dtUpdate = retrieveDtUpdateAsPathVariables(req);
         UUID uuid = retrieveUserUuidAsPathVariable(req);
         if (uuid == null || dtUpdate == null) {
-//            TODO
             throw new IllegalArgumentException("Координаты отсутствуют или неверны");
         }
         this.supplyService.delete(uuid, dtUpdate);
