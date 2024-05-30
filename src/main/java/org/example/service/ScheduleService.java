@@ -2,6 +2,7 @@ package org.example.service;
 
 import org.example.core.dto.ScheduleCreateDto;
 import org.example.core.dto.ScheduleDto;
+import org.example.core.entity.Schedule;
 import org.example.dao.api.IScheduleDao;
 import org.example.service.api.IScheduleService;
 
@@ -17,28 +18,29 @@ public class ScheduleService implements IScheduleService {
         this.scheduleDao = scheduleDao;
     }
 
+
     @Override
-    public ScheduleDto get(UUID uuid) {
+    public Schedule get(UUID uuid) {
         return null;
     }
 
     @Override
-    public List<ScheduleDto> get() {
+    public List<Schedule> get() {
         return null;
     }
 
     @Override
-    public ScheduleDto save(ScheduleCreateDto scheduleCreateDto) {
+    public Schedule save(ScheduleCreateDto scheduleCreateDto) {
         return null;
     }
 
     @Override
-    public ScheduleDto update(ScheduleCreateDto scheduleCreateDto, UUID uuid, LocalDateTime dtUpdate) {
+    public Schedule update(ScheduleCreateDto scheduleCreateDto, UUID uuid, LocalDateTime dtUpdate) {
         return null;
     }
 
     @Override
-    public ScheduleDto delete(UUID uuid, LocalDateTime dtUpdate) {
+    public Schedule delete(UUID uuid, LocalDateTime dtUpdate) {
         return null;
     }
 }

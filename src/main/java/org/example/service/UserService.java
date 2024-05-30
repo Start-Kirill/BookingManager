@@ -1,7 +1,7 @@
 package org.example.service;
 
 import org.example.core.dto.UserCreateDto;
-import org.example.core.dto.UserDto;
+import org.example.core.entity.User;
 import org.example.dao.api.IUserDao;
 import org.example.service.api.IUserService;
 
@@ -18,27 +18,42 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public UserDto get(UUID uuid) {
+    public User get(UUID uuid) {
         return null;
     }
 
     @Override
-    public List<UserDto> get() {
+    public List<User> get() {
+        List<User> users = this.userDao.get();
+//        return users.stream().map(u -> {
+//            UserDto userDto = new UserDto();
+//            userDto.setUuid(u.getUuid());
+//            userDto.setName(u.getName());
+//            userDto.setUserRole(u.getUserRole());
+//            userDto.setPhoneNumber(u.getPhoneNumber());
+//            List<UUID> supplies = u.getSupplies().stream().map(Supply::getUuid).toList();
+//            userDto.setSupplies(supplies);
+//            userDto.setDtCreate(u.getDtCreate());
+//            userDto.setDtUpdate(u.getDtUpdate());
+//            return userDto;
+//        }).toList();
         return null;
     }
 
     @Override
-    public UserDto save(UserCreateDto userCreateDto) {
+    public User save(UserCreateDto userCreateDto) {
         return null;
     }
 
     @Override
-    public UserDto update(UserCreateDto userCreateDto, UUID uuid, LocalDateTime dtUpdate) {
+    public User update(UserCreateDto userCreateDto, UUID uuid, LocalDateTime dtUpdate) {
         return null;
     }
 
     @Override
-    public UserDto delete(UUID uuid, LocalDateTime dtUpdate) {
+    public User delete(UUID uuid, LocalDateTime dtUpdate) {
         return null;
     }
+
+
 }

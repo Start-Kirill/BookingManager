@@ -1,5 +1,6 @@
 package org.example.core.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.example.core.enums.UserRole;
 
 import java.time.LocalDateTime;
@@ -17,10 +18,12 @@ public class UserDto {
 
     private UserRole userRole;
 
-    private LocalDateTime dtCreate;
-
     private List<UUID> supplies;
 
+    @JsonProperty("dt_create")
+    private LocalDateTime dtCreate;
+
+    @JsonProperty("dt_update")
     private LocalDateTime dtUpdate;
 
     public UserDto() {

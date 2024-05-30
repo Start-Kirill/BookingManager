@@ -1,8 +1,9 @@
-package org.example.endpoints.web;
+package org.example.endpoints.web.servlets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
+import org.example.endpoints.web.factory.ObjectMapperFactory;
 import org.example.service.api.IScheduleService;
 import org.example.service.factory.ScheduleServiceFactory;
 
@@ -13,8 +14,8 @@ public class ScheduleServlet extends HttpServlet {
 
     private final ObjectMapper objectMapper;
 
-    public ScheduleServlet(IScheduleService scheduleService, ObjectMapper objectMapper) {
+    public ScheduleServlet() {
         this.scheduleService = ScheduleServiceFactory.getInstance();
-        this.objectMapper = objectMapper;
+        this.objectMapper = ObjectMapperFactory.getInstance();
     }
 }
