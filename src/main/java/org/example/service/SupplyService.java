@@ -1,7 +1,7 @@
 package org.example.service;
 
-import org.example.core.dto.SupplyDto;
 import org.example.core.dto.SupplyCreateDto;
+import org.example.core.entity.Supply;
 import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
 
@@ -17,28 +17,39 @@ public class SupplyService implements ISupplyService {
         this.supplyDao = supplyDao;
     }
 
+
     @Override
-    public SupplyCreateDto get(UUID uuid) {
+    public Supply get(UUID uuid) {
         return null;
     }
 
     @Override
-    public List<SupplyCreateDto> get() {
+    public List<Supply> get() {
         return null;
     }
 
     @Override
-    public SupplyCreateDto save(SupplyDto supplyDto) {
+    public Supply save(SupplyCreateDto supplyCreateDto) {
+        Supply supply = new Supply();
+        supply.setUuid(UUID.randomUUID());
+        LocalDateTime now = LocalDateTime.now();
+        supply.setDtCreate(now);
+        supply.setDtUpdate(now);
+
+        supply.setName(supplyCreateDto.getName());
+        supply.setPrice(supplyCreateDto.getPrice());
+        supply.setDuration(supplyCreateDto.getDuration());
+
+        return this.supplyDao.save(supply);
+    }
+
+    @Override
+    public Supply update(SupplyCreateDto supplyCreateDto, UUID uuid, LocalDateTime dtUpdate) {
         return null;
     }
 
     @Override
-    public SupplyCreateDto update(SupplyDto supplyDto, UUID uuid, LocalDateTime dtUpdate) {
-        return null;
-    }
-
-    @Override
-    public SupplyCreateDto delete(UUID uuid, LocalDateTime dtUpdate) {
+    public Supply delete(UUID uuid, LocalDateTime dtUpdate) {
         return null;
     }
 }

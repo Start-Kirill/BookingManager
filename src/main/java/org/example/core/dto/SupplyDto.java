@@ -1,5 +1,7 @@
 package org.example.core.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -18,8 +20,10 @@ public class SupplyDto {
      */
     private Integer duration;
 
+    @JsonProperty("dt_create")
     private LocalDateTime dtCreate;
 
+    @JsonProperty("dt_update")
     private LocalDateTime dtUpdate;
 
     public SupplyDto() {
