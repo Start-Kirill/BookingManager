@@ -14,6 +14,6 @@ public interface ICRUDService<T, C> {
 
     T update(C c, UUID uuid, LocalDateTime dtUpdate);
 
-    T delete(UUID uuid, LocalDateTime dtUpdate);
+    void delete(UUID uuid, LocalDateTime dtUpdate);
 
 }

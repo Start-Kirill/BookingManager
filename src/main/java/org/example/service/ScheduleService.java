@@ -1,7 +1,6 @@
 package org.example.service;
 
 import org.example.core.dto.ScheduleCreateDto;
-import org.example.core.dto.ScheduleDto;
 import org.example.core.entity.Schedule;
 import org.example.dao.api.IScheduleDao;
 import org.example.service.api.IScheduleService;
@@ -40,7 +39,6 @@ public class ScheduleService implements IScheduleService {
     }
 
     @Override
-    public Schedule delete(UUID uuid, LocalDateTime dtUpdate) {
-        return null;
+    public void delete(UUID uuid, LocalDateTime dtUpdate) {
     }
 }

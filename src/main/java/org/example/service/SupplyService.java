@@ -5,6 +5,7 @@ import org.example.core.entity.Supply;
 import org.example.core.mappers.SupplyMapper;
 import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
+import org.example.service.exceptions.ObjectNotUpToDatedException;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class SupplyService implements ISupplyService {
+
+    private static final String SUPPLY_NOT_UP_TO_DATED_MESSAGE = "Объект не актуален. Получите новый объект и попробуйте снова";
 
     private final ISupplyDao supplyDao;
 
@@ -53,8 +56,7 @@ public class SupplyService implements ISupplyService {
         Supply actualSupply = this.get(uuid);
         LocalDateTime actualDtUpdate = actualSupply.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
-//            TODO
-            throw new SecurityException("Объект не актуален. Получите новый объект и попробуйте снова");
+            throw new ObjectNotUpToDatedException(SUPPLY_NOT_UP_TO_DATED_MESSAGE);
         }
 
         actualSupply.setName(supplyCreateDto.getName());
@@ -65,12 +67,18 @@ public class SupplyService implements ISupplyService {
     }
 
     @Override
-    public Supply delete(UUID uuid, LocalDateTime dtUpdate) {
-        return null;
+    public void delete(UUID uuid, LocalDateTime dtUpdate) {
+        Supply actualSupply = this.get(uuid);
+        LocalDateTime actualDtUpdate = actualSupply.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
+        if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
+            throw new ObjectNotUpToDatedException(SUPPLY_NOT_UP_TO_DATED_MESSAGE);
+        }
+        this.supplyDao.delete(actualSupply);
     }
 
     //    TODO
     private void validate(SupplyCreateDto supplyCreateDto) {
+
 
     }
 }

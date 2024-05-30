@@ -2,6 +2,10 @@ package org.example.dao;
 
 import org.example.core.entity.Supply;
 import org.example.dao.api.ISupplyDao;
+import org.example.dao.exceptions.CreatingDBDataException;
+import org.example.dao.exceptions.DeletingDBDataException;
+import org.example.dao.exceptions.ReceivingDBDataException;
+import org.example.dao.exceptions.UpdatingDBDataException;
 import org.example.dao.factory.ds.DataBaseConnectionFactory;
 
 import java.math.BigDecimal;
@@ -29,6 +33,16 @@ public class SupplyDao implements ISupplyDao {
 
     private static final String DT_UPDATE_COLUMN_NAME = "dt_update";
 
+    private static final String FAIL_RECEIVE_SINGLE_SUPPLY_MESSAGE = "Ошибка получения услуги";
+
+    private static final String FAIL_RECEIVE_LIST_SUPPLIES_MESSAGE = "Ошибка получения списка услуг";
+
+    private static final String FAIL_CREATE_SUPPLY_MESSAGE = "Ошибка сохранения данных в базу";
+
+    private static final String FAIL_UPDATE_SUPPLY_MESSAGE = "Ошибка обновления данных";
+
+    private static final String FAIL_DELETE_SUPPLY_MESSAGE = "Ошибка удаления данных";
+
     @Override
     public Optional<Supply> get(UUID uuid) {
         try (Connection c = DataBaseConnectionFactory.getConnection();
@@ -41,10 +55,10 @@ public class SupplyDao implements ISupplyDao {
             while (rs.next()) {
                 supply = createSupply(rs);
             }
+            rs.close();
             return Optional.ofNullable(supply);
         } catch (SQLException e) {
-//            TODO
-            throw new RuntimeException(e);
+            throw new ReceivingDBDataException(FAIL_RECEIVE_SINGLE_SUPPLY_MESSAGE, e.getCause());
         }
 
     }
@@ -59,10 +73,10 @@ public class SupplyDao implements ISupplyDao {
             while (rs.next()) {
                 supplies.add(createSupply(rs));
             }
+            rs.close();
             return supplies;
         } catch (SQLException e) {
-//            TODO
-            throw new RuntimeException(e);
+            throw new ReceivingDBDataException(FAIL_RECEIVE_LIST_SUPPLIES_MESSAGE, e.getCause());
         }
     }
 
@@ -70,9 +84,7 @@ public class SupplyDao implements ISupplyDao {
     public Supply save(Supply supply) {
 
         try (Connection c = DataBaseConnectionFactory.getConnection();
-             PreparedStatement ps1 = c.prepareStatement("INSERT INTO app.supply(" +
-                     "uuid, name, price, duration, dt_create, dt_update)" +
-                     "VALUES (?, ?, ?, ?, ?, ?)")) {
+             PreparedStatement ps1 = c.prepareStatement(createInsertSqlStatement())) {
             c.setAutoCommit(false);
 
             ps1.setObject(1, supply.getUuid());
@@ -88,8 +100,7 @@ public class SupplyDao implements ISupplyDao {
 
             return supply;
         } catch (SQLException e) {
-//            TODO
-            throw new RuntimeException(e);
+            throw new CreatingDBDataException(FAIL_CREATE_SUPPLY_MESSAGE, e.getCause());
         }
 
 
@@ -115,17 +126,45 @@ public class SupplyDao implements ISupplyDao {
             }
 
             c.commit();
+            rs.close();
 
             return updatedSupply;
         } catch (SQLException e) {
-//            TODO
-            throw new RuntimeException(e);
+            throw new UpdatingDBDataException(FAIL_UPDATE_SUPPLY_MESSAGE, e.getCause());
         }
     }
 
     @Override
     public void delete(Supply supply) {
+        try (Connection c = DataBaseConnectionFactory.getConnection();
+             PreparedStatement ps = c.prepareStatement(createDeleteSqlStatement())) {
+            c.setAutoCommit(false);
 
+            ps.setObject(1, supply.getUuid());
+            ps.setObject(2, supply.getDtUpdate());
+
+            ps.execute();
+            c.commit();
+        } catch (SQLException e) {
+            throw new DeletingDBDataException(FAIL_DELETE_SUPPLY_MESSAGE, e.getCause());
+        }
+    }
+
+    private String createInsertSqlStatement() {
+        StringBuilder sb = new StringBuilder("INSERT INTO app.supply(");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(NAME_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(PRICE_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(DURATION_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(DT_CREATE_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(") VALUES (?, ?, ?, ?, ?, ?)");
+        return sb.toString();
     }
 
     private String createGetAllSqlStatement() {
@@ -170,6 +209,15 @@ public class SupplyDao implements ISupplyDao {
         sb.append(" = ? AND ");
         sb.append(DT_UPDATE_COLUMN_NAME);
         sb.append(" = ? RETURNING *");
+        return sb.toString();
+    }
+
+    private String createDeleteSqlStatement() {
+        StringBuilder sb = new StringBuilder("DELETE FROM app.supply WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" = ? AND ");
+        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(" = ?");
         return sb.toString();
     }
 
