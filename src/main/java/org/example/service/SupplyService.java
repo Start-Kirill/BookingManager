@@ -2,6 +2,7 @@ package org.example.service;
 
 import org.example.core.dto.SupplyCreateDto;
 import org.example.core.entity.Supply;
+import org.example.core.mappers.SupplyMapper;
 import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
 
@@ -30,17 +31,22 @@ public class SupplyService implements ISupplyService {
 
     @Override
     public Supply save(SupplyCreateDto supplyCreateDto) {
-        Supply supply = new Supply();
+
+        validate(supplyCreateDto);
+
+        Supply supply = SupplyMapper.INSTANCE.supplyCreateDtoToSupply(supplyCreateDto);
+
         supply.setUuid(UUID.randomUUID());
         LocalDateTime now = LocalDateTime.now();
         supply.setDtCreate(now);
         supply.setDtUpdate(now);
 
-        supply.setName(supplyCreateDto.getName());
-        supply.setPrice(supplyCreateDto.getPrice());
-        supply.setDuration(supplyCreateDto.getDuration());
-
         return this.supplyDao.save(supply);
+    }
+
+    //    TODO
+    private void validate(SupplyCreateDto supplyCreateDto) {
+
     }
 
     @Override

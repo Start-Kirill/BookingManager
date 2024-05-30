@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.core.dto.SupplyCreateDto;
 import org.example.core.dto.SupplyDto;
 import org.example.core.entity.Supply;
+import org.example.core.mappers.SupplyMapper;
 import org.example.endpoints.web.factory.ObjectMapperFactory;
 import org.example.service.api.ISupplyService;
 import org.example.service.factory.SupplyServiceFactory;
@@ -33,13 +34,8 @@ public class SupplyServlet extends HttpServlet {
         ServletInputStream inputStream = req.getInputStream();
         SupplyCreateDto supplyCreateDto = this.objectMapper.readValue(inputStream, SupplyCreateDto.class);
         Supply supply = this.supplyService.save(supplyCreateDto);
-        SupplyDto supplyDto = new SupplyDto();
-        supplyDto.setUuid(supply.getUuid());
-        supplyDto.setName(supply.getName());
-        supplyDto.setPrice(supply.getPrice());
-        supplyDto.setDtCreate(supply.getDtCreate());
-        supplyDto.setDtUpdate(supply.getDtUpdate());
-        resp.getWriter().write(this.objectMapper.writeValueAsString(supplyDto));
+        SupplyDto dto = SupplyMapper.INSTANCE.supplyToSupplyDto(supply);
+        resp.getWriter().write(this.objectMapper.writeValueAsString(dto));
     }
 
 }

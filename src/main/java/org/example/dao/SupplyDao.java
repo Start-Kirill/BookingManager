@@ -30,6 +30,7 @@ public class SupplyDao implements ISupplyDao {
                      "uuid, name, price, duration, dt_create, dt_update)" +
                      "VALUES (?, ?, ?, ?, ?, ?)")) {
             c.setAutoCommit(false);
+
             ps1.setObject(1, supply.getUuid());
             ps1.setString(2, supply.getName());
             ps1.setBigDecimal(3, supply.getPrice());
@@ -41,6 +42,7 @@ public class SupplyDao implements ISupplyDao {
 
             c.commit();
         } catch (SQLException e) {
+//            TODO
             throw new RuntimeException(e);
         }
 
