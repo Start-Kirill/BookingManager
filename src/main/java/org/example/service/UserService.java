@@ -51,8 +51,8 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User delete(UUID uuid, LocalDateTime dtUpdate) {
-        return null;
+    public void delete(UUID uuid, LocalDateTime dtUpdate) {
+
     }
 
 

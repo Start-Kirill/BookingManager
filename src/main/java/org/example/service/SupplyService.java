@@ -65,8 +65,14 @@ public class SupplyService implements ISupplyService {
     }
 
     @Override
-    public Supply delete(UUID uuid, LocalDateTime dtUpdate) {
-        return null;
+    public void delete(UUID uuid, LocalDateTime dtUpdate) {
+        Supply actualSupply = this.get(uuid);
+        LocalDateTime actualDtUpdate = actualSupply.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
+        if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
+//            TODO
+            throw new SecurityException("Объект не актуален. Получите новый объект и попробуйте снова");
+        }
+        this.supplyDao.delete(actualSupply);
     }
 
     //    TODO

@@ -41,6 +41,7 @@ public class SupplyDao implements ISupplyDao {
             while (rs.next()) {
                 supply = createSupply(rs);
             }
+            rs.close();
             return Optional.ofNullable(supply);
         } catch (SQLException e) {
 //            TODO
@@ -59,6 +60,7 @@ public class SupplyDao implements ISupplyDao {
             while (rs.next()) {
                 supplies.add(createSupply(rs));
             }
+            rs.close();
             return supplies;
         } catch (SQLException e) {
 //            TODO
@@ -115,6 +117,7 @@ public class SupplyDao implements ISupplyDao {
             }
 
             c.commit();
+            rs.close();
 
             return updatedSupply;
         } catch (SQLException e) {
@@ -125,7 +128,19 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public void delete(Supply supply) {
+        try (Connection c = DataBaseConnectionFactory.getConnection();
+             PreparedStatement ps = c.prepareStatement(createDeleteSqlStatement())) {
+            c.setAutoCommit(false);
 
+            ps.setObject(1, supply.getUuid());
+            ps.setObject(2, supply.getDtUpdate());
+
+            ps.execute();
+            c.commit();
+        } catch (SQLException e) {
+//            TODO
+            throw new RuntimeException(e);
+        }
     }
 
     private String createGetAllSqlStatement() {
@@ -170,6 +185,15 @@ public class SupplyDao implements ISupplyDao {
         sb.append(" = ? AND ");
         sb.append(DT_UPDATE_COLUMN_NAME);
         sb.append(" = ? RETURNING *");
+        return sb.toString();
+    }
+
+    private String createDeleteSqlStatement() {
+        StringBuilder sb = new StringBuilder("DELETE FROM app.supply WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" = ? AND ");
+        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(" = ?");
         return sb.toString();
     }
 

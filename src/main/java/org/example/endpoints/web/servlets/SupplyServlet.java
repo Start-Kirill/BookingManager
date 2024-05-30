@@ -40,6 +40,7 @@ public class SupplyServlet extends HttpServlet {
         SupplyCreateDto supplyCreateDto = this.objectMapper.readValue(inputStream, SupplyCreateDto.class);
         Supply supply = this.supplyService.save(supplyCreateDto);
         SupplyDto dto = SupplyMapper.INSTANCE.supplyToSupplyDto(supply);
+        resp.setStatus(201);
         resp.getWriter().write(this.objectMapper.writeValueAsString(dto));
     }
 
@@ -63,12 +64,24 @@ public class SupplyServlet extends HttpServlet {
         UUID uuid = retrieveUserUuidAsPathVariable(req);
         LocalDateTime dtUpdate = retrieveDtUpdateAsPathVariables(req);
         if (uuid == null || dtUpdate == null) {
+//            TODO
             throw new IllegalArgumentException("Координаты отсутствуют или неверны");
         }
         ServletInputStream inputStream = req.getInputStream();
         SupplyCreateDto supplyCreateDto = this.objectMapper.readValue(inputStream, SupplyCreateDto.class);
         Supply supply = this.supplyService.update(supplyCreateDto, uuid, dtUpdate);
         resp.getWriter().write(this.objectMapper.writeValueAsString(SupplyMapper.INSTANCE.supplyToSupplyDto(supply)));
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        LocalDateTime dtUpdate = retrieveDtUpdateAsPathVariables(req);
+        UUID uuid = retrieveUserUuidAsPathVariable(req);
+        if (uuid == null || dtUpdate == null) {
+//            TODO
+            throw new IllegalArgumentException("Координаты отсутствуют или неверны");
+        }
+        this.supplyService.delete(uuid, dtUpdate);
     }
 
     private UUID retrieveUserUuidAsPathVariable(HttpServletRequest req) {
