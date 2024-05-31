@@ -81,6 +81,28 @@ public class SupplyDao implements ISupplyDao {
     }
 
     @Override
+    public List<Supply> get(List<UUID> uuids) {
+        try (Connection c = DataBaseConnectionFactory.getConnection();
+             PreparedStatement ps = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
+
+            for (int i = 0; i < uuids.size(); i++) {
+                ps.setObject(i + 1, uuids.get(i));
+            }
+
+            List<Supply> supplies = new ArrayList<>();
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                supplies.add(createSupply(rs));
+            }
+            rs.close();
+            return supplies;
+        } catch (SQLException e) {
+            throw new ReceivingDBDataException(FAIL_RECEIVE_LIST_SUPPLIES_MESSAGE, e.getCause());
+        }
+    }
+
+
+    @Override
     public Supply save(Supply supply) {
 
         try (Connection c = DataBaseConnectionFactory.getConnection();
@@ -186,6 +208,23 @@ public class SupplyDao implements ISupplyDao {
         return sb.toString();
     }
 
+    private String createGetAccordingToUuidsSqlStatement(int number) {
+        StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" IN (");
+        boolean needComma = false;
+        for (int i = 0; i < number; i++) {
+            if (needComma) {
+                sb.append(", ");
+            }
+            sb.append("?");
+            needComma = true;
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
     private String createGetOneByUuidSqlStatement() {
         StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
         sb.append(" WHERE ");
@@ -230,4 +269,6 @@ public class SupplyDao implements ISupplyDao {
         LocalDateTime dtUpdate = rs.getTimestamp(DT_UPDATE_COLUMN_NAME).toLocalDateTime();
         return new Supply(uuid, name, price, duration, dtCreate, dtUpdate);
     }
+
+
 }

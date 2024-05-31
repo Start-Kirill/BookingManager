@@ -34,6 +34,11 @@ public class SupplyService implements ISupplyService {
     }
 
     @Override
+    public List<Supply> get(List<UUID> uuids) {
+        return this.supplyDao.get(uuids);
+    }
+
+    @Override
     public Supply save(SupplyCreateDto supplyCreateDto) {
 
         validate(supplyCreateDto);
@@ -81,4 +86,6 @@ public class SupplyService implements ISupplyService {
 
 
     }
+
+
 }
