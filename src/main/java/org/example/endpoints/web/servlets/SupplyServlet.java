@@ -46,7 +46,7 @@ public class SupplyServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        UUID uuid = retrieveUserUuidAsPathVariable(req);
+        UUID uuid = retrieveSupplyUuidAsPathVariable(req);
         if (uuid == null) {
             List<Supply> supplies = this.supplyService.get();
             List<SupplyDto> suppliesDto = supplies.stream().map(SupplyMapper.INSTANCE::supplyToSupplyDto).toList();
@@ -61,7 +61,7 @@ public class SupplyServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        UUID uuid = retrieveUserUuidAsPathVariable(req);
+        UUID uuid = retrieveSupplyUuidAsPathVariable(req);
         LocalDateTime dtUpdate = retrieveDtUpdateAsPathVariables(req);
         if (uuid == null || dtUpdate == null) {
             throw new IllegalArgumentException("Координаты отсутствуют или неверны");
@@ -75,14 +75,14 @@ public class SupplyServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         LocalDateTime dtUpdate = retrieveDtUpdateAsPathVariables(req);
-        UUID uuid = retrieveUserUuidAsPathVariable(req);
+        UUID uuid = retrieveSupplyUuidAsPathVariable(req);
         if (uuid == null || dtUpdate == null) {
             throw new IllegalArgumentException("Координаты отсутствуют или неверны");
         }
         this.supplyService.delete(uuid, dtUpdate);
     }
 
-    private UUID retrieveUserUuidAsPathVariable(HttpServletRequest req) {
+    private UUID retrieveSupplyUuidAsPathVariable(HttpServletRequest req) {
         String[] reqURIParts = req.getRequestURI().split("/");
         int index = 0;
         while (!reqURIParts[index++].equals("supply")) ;
