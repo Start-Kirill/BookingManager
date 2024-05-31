@@ -21,6 +21,8 @@ import java.util.UUID;
 
 public class SupplyDao implements ISupplyDao {
 
+    private static final String SUPPLY_TABLE_NAME = "app.supply";
+
     private static final String UUID_COLUMN_NAME = "uuid";
 
     private static final String NAME_COLUMN_NAME = "name";
@@ -173,7 +175,9 @@ public class SupplyDao implements ISupplyDao {
     }
 
     private String createInsertSqlStatement() {
-        StringBuilder sb = new StringBuilder("INSERT INTO app.supply(");
+        StringBuilder sb = new StringBuilder("INSERT INTO ");
+        sb.append(SUPPLY_TABLE_NAME);
+        sb.append("(");
         sb.append(UUID_COLUMN_NAME);
         sb.append(", ");
         sb.append(NAME_COLUMN_NAME);
@@ -203,7 +207,8 @@ public class SupplyDao implements ISupplyDao {
         sb.append(DT_CREATE_COLUMN_NAME);
         sb.append(", ");
         sb.append(DT_UPDATE_COLUMN_NAME);
-        sb.append(" FROM app.supply");
+        sb.append(" FROM ");
+        sb.append(SUPPLY_TABLE_NAME);
 
         return sb.toString();
     }
@@ -234,7 +239,9 @@ public class SupplyDao implements ISupplyDao {
     }
 
     private String createUpdateSqlStatement() {
-        StringBuilder sb = new StringBuilder("UPDATE app.supply SET ");
+        StringBuilder sb = new StringBuilder("UPDATE ");
+        sb.append(SUPPLY_TABLE_NAME);
+        sb.append(" SET ");
         sb.append(NAME_COLUMN_NAME);
         sb.append(" = ?,");
         sb.append(PRICE_COLUMN_NAME);
