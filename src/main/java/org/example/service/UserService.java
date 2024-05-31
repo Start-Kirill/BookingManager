@@ -7,13 +7,17 @@ import org.example.core.mappers.UserMapper;
 import org.example.dao.api.IUserDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.api.IUserService;
+import org.example.service.exceptions.ObjectNotUpToDatedException;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class UserService implements IUserService {
+
+    private static final String USER_NOT_UP_TO_DATED_MESSAGE = "Пользователь не актуален. Получите актуального пользователя и попробуйте снова";
 
     private final IUserDao userDao;
 
@@ -59,7 +63,26 @@ public class UserService implements IUserService {
 
     @Override
     public User update(UserCreateDto userCreateDto, UUID uuid, LocalDateTime dtUpdate) {
-        return null;
+        validate(userCreateDto);
+
+        User actualUser = this.get(uuid);
+        LocalDateTime actualDtUpdate = actualUser.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
+        if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
+            throw new ObjectNotUpToDatedException(USER_NOT_UP_TO_DATED_MESSAGE);
+        }
+
+        actualUser.setName(userCreateDto.getName());
+        actualUser.setPhoneNumber(userCreateDto.getPhoneNumber());
+        actualUser.setUserRole(userCreateDto.getUserRole());
+        List<UUID> supplyUuids = userCreateDto.getSupplies();
+
+        List<Supply> supplies = new ArrayList<>();
+        if (supplyUuids != null) {
+            supplies = this.supplyService.get(supplyUuids);
+        }
+        actualUser.setSupplies(supplies);
+
+        return this.userDao.update(actualUser);
     }
 
     @Override
