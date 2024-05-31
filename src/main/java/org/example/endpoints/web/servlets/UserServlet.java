@@ -12,16 +12,18 @@ import org.example.core.dto.UserDto;
 import org.example.core.entity.User;
 import org.example.core.mappers.UserMapper;
 import org.example.endpoints.web.factory.ObjectMapperFactory;
+import org.example.endpoints.web.util.PathVariablesSearcherUtil;
 import org.example.service.api.IUserService;
 import org.example.service.factory.UserServiceFactory;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
+import java.util.UUID;
 
 @WebServlet(urlPatterns = {"/user", "/user/*"})
 public class UserServlet extends HttpServlet {
 
+    private static final String URL_PART_BEFORE_UUID_NAME = "user";
     private final IUserService userService;
 
     private final ObjectMapper objectMapper;
@@ -33,10 +35,17 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        List<User> users = this.userService.get();
-        List<UserDto> userDtos = users.stream().map(UserMapper.INSTANCE::userToUserDto).toList();
-        PrintWriter writer = resp.getWriter();
-        writer.write(this.objectMapper.writeValueAsString(userDtos));
+        UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
+        if (uuid == null) {
+            List<User> users = this.userService.get();
+            List<UserDto> userDtos = users.stream().map(UserMapper.INSTANCE::userToUserDto).toList();
+            resp.getWriter().write(this.objectMapper.writeValueAsString(userDtos));
+        } else {
+            User user = this.userService.get(uuid);
+            UserDto userDto = UserMapper.INSTANCE.userToUserDto(user);
+            resp.getWriter().write(this.objectMapper.writeValueAsString(userDto));
+        }
+
     }
 
     @Override
@@ -44,6 +53,7 @@ public class UserServlet extends HttpServlet {
         ServletInputStream inputStream = req.getInputStream();
         UserCreateDto userCreateDto = this.objectMapper.readValue(inputStream, UserCreateDto.class);
         User user = this.userService.save(userCreateDto);
+        resp.setStatus(201);
         resp.getWriter().write(this.objectMapper.writeValueAsString(UserMapper.INSTANCE.userToUserDto(user)));
     }
 }

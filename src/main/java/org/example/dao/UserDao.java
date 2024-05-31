@@ -43,6 +43,8 @@ public class UserDao implements IUserDao {
 
     private static final String FAIL_RECEIVE_LIST_USERS_MESSAGE = "Ошибка получения пользователей";
 
+    private static final String FAIL_RECEIVE_USER_MESSAGE = "Ошибка получения пользователя";
+
     private final ISupplyDao supplyDao;
 
     public UserDao(ISupplyDao supplyDao) {
@@ -51,7 +53,31 @@ public class UserDao implements IUserDao {
 
     @Override
     public Optional<User> get(UUID uuid) {
-        return Optional.empty();
+        try (Connection c = DataBaseConnectionFactory.getConnection();
+             PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
+
+            ps.setObject(1, uuid);
+
+            ResultSet rs = ps.executeQuery();
+            User user = null;
+            while (rs.next()) {
+                if (user == null) {
+                    user = createUser(rs);
+                }
+                Object rawSupplyUuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
+                if (rawSupplyUuid != null) {
+                    UUID supplyUuid = (UUID) rawSupplyUuid;
+                    user.getSupplies().add(this.supplyDao.get(supplyUuid).orElseThrow());
+                }
+            }
+
+            rs.close();
+
+            return Optional.ofNullable(user);
+
+        } catch (SQLException e) {
+            throw new ReceivingDBDataException(FAIL_RECEIVE_USER_MESSAGE, e.getCause());
+        }
     }
 
     @Override
@@ -59,7 +85,6 @@ public class UserDao implements IUserDao {
 
         try (Connection c = DataBaseConnectionFactory.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetAllSqlStatement())) {
-            c.setAutoCommit(false);
 
             ResultSet rs = ps.executeQuery();
 
@@ -178,6 +203,14 @@ public class UserDao implements IUserDao {
         sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
 
 
+        return sb.toString();
+    }
+
+    private String createGetOneByUuidSqlStatement() {
+        StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" = ?");
         return sb.toString();
     }
 

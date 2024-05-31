@@ -27,7 +27,7 @@ public class UserService implements IUserService {
 
     @Override
     public User get(UUID uuid) {
-        return null;
+        return this.userDao.get(uuid).orElseThrow();
     }
 
     @Override
