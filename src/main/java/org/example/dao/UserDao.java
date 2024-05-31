@@ -139,7 +139,6 @@ public class UserDao implements IUserDao {
              PreparedStatement ps3 = c.prepareStatement(createInsertUserSuppliesSqlStatement());
              PreparedStatement ps4 = c.prepareStatement(createGetOneByUuidSqlStatement())) {
 
-
             c.setAutoCommit(false);
 
             ps1.setString(1, user.getName());
@@ -167,8 +166,8 @@ public class UserDao implements IUserDao {
 
             User updatedUser = createUser(rs);
 
-            c.commit();
             rs.close();
+            c.commit();
 
             return updatedUser;
         } catch (SQLException e) {
@@ -181,6 +180,7 @@ public class UserDao implements IUserDao {
         try (Connection c = DataBaseConnectionFactory.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createDeleteUserSqlStatement())) {
+
             c.setAutoCommit(false);
 
             ps1.setObject(1, user.getUuid());
