@@ -12,18 +12,21 @@ import org.example.core.dto.SupplyDto;
 import org.example.core.entity.Supply;
 import org.example.core.mappers.SupplyMapper;
 import org.example.endpoints.web.factory.ObjectMapperFactory;
+import org.example.endpoints.web.util.PathVariablesSearcherUtil;
 import org.example.service.api.ISupplyService;
 import org.example.service.factory.SupplyServiceFactory;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
 @WebServlet(urlPatterns = {"/supply", "/supply/*", "/supply/*/dt_update/*"})
 public class SupplyServlet extends HttpServlet {
+
+    private static final String URL_PART_BEFORE_UUID_NAME = "supply";
+
+    private static final String URL_PART_BEFORE_DT_UPDATE_NAME = "dt_update";
 
     private final ISupplyService supplyService;
 
@@ -46,7 +49,7 @@ public class SupplyServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        UUID uuid = retrieveSupplyUuidAsPathVariable(req);
+        UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         if (uuid == null) {
             List<Supply> supplies = this.supplyService.get();
             List<SupplyDto> suppliesDto = supplies.stream().map(SupplyMapper.INSTANCE::supplyToSupplyDto).toList();
@@ -61,8 +64,8 @@ public class SupplyServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        UUID uuid = retrieveSupplyUuidAsPathVariable(req);
-        LocalDateTime dtUpdate = retrieveDtUpdateAsPathVariables(req);
+        UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
+        LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
         if (uuid == null || dtUpdate == null) {
             throw new IllegalArgumentException("Координаты отсутствуют или неверны");
         }
@@ -74,61 +77,12 @@ public class SupplyServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        LocalDateTime dtUpdate = retrieveDtUpdateAsPathVariables(req);
-        UUID uuid = retrieveSupplyUuidAsPathVariable(req);
+        LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
+        UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         if (uuid == null || dtUpdate == null) {
             throw new IllegalArgumentException("Координаты отсутствуют или неверны");
         }
         this.supplyService.delete(uuid, dtUpdate);
     }
-
-    private UUID retrieveSupplyUuidAsPathVariable(HttpServletRequest req) {
-        String[] reqURIParts = req.getRequestURI().split("/");
-        int index = 0;
-        while (!reqURIParts[index++].equals("supply")) ;
-        String rawUserUuid;
-        UUID userUuid = null;
-        if (reqURIParts.length > index) {
-            rawUserUuid = reqURIParts[index];
-            if (validateUuid(rawUserUuid)) {
-                userUuid = UUID.fromString(rawUserUuid);
-            }
-        }
-        return userUuid;
-    }
-
-    private LocalDateTime retrieveDtUpdateAsPathVariables(HttpServletRequest req) {
-        LocalDateTime dtUpdate = null;
-        String[] reqURIParts = req.getRequestURI().split("/");
-        int index = 0;
-        while (!reqURIParts[index++].equals("dt_update")) ;
-        String rawDtUpdate;
-        if (reqURIParts.length > index) {
-            rawDtUpdate = reqURIParts[index];
-            if (validateLocalDateTime(rawDtUpdate)) {
-                dtUpdate = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(rawDtUpdate)), ZoneOffset.UTC);
-            }
-        }
-        return dtUpdate;
-    }
-
-    private boolean validateLocalDateTime(String rawDtUpdate) {
-        try {
-            Long.parseLong(rawDtUpdate);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    private boolean validateUuid(String uuid) {
-        try {
-            UUID.fromString(uuid);
-            return true;
-        } catch (IllegalArgumentException ex) {
-            return false;
-        }
-    }
-
 
 }
