@@ -14,8 +14,10 @@ public class UserDto {
 
     private String name;
 
+    @JsonProperty("phone_number")
     private String phoneNumber;
 
+    @JsonProperty("user_role")
     private UserRole userRole;
 
     private List<UUID> supplies;

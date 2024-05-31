@@ -14,7 +14,7 @@ public class UserDaoFactory {
         if (instance == null) {
             synchronized (UserDaoFactory.class) {
                 if (instance == null) {
-                    instance = new UserDao();
+                    instance = new UserDao(SupplyDaoFactory.getInstance());
                 }
             }
         }

@@ -26,7 +26,7 @@ public class User {
     public User() {
     }
 
-    public User(UUID uuid, String name, String phoneNumber, UserRole userRole, LocalDateTime dtCreate, List<Supply> supplies, LocalDateTime dtUpdate) {
+    public User(UUID uuid, String name, String phoneNumber, UserRole userRole, List<Supply> supplies, LocalDateTime dtCreate, LocalDateTime dtUpdate) {
         this.uuid = uuid;
         this.name = name;
         this.phoneNumber = phoneNumber;
