@@ -1,5 +1,6 @@
 package org.example.core.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.example.core.enums.UserRole;
 
 import java.util.List;
@@ -9,10 +10,13 @@ import java.util.UUID;
 public class UserCreateDto {
     private String name;
 
+    @JsonProperty("phone_number")
     private String phoneNumber;
 
+    @JsonProperty("user_role")
     private UserRole userRole;
 
+    @JsonProperty(required = false)
     private List<UUID> supplies;
 
     public UserCreateDto() {
