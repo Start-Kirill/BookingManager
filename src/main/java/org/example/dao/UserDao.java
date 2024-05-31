@@ -6,6 +6,7 @@ import org.example.core.enums.UserRole;
 import org.example.dao.api.ISupplyDao;
 import org.example.dao.api.IUserDao;
 import org.example.dao.exceptions.CreatingDBDataException;
+import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
 import org.example.dao.factory.ds.DataBaseConnectionFactory;
@@ -47,6 +48,8 @@ public class UserDao implements IUserDao {
     private static final String FAIL_RECEIVE_USER_MESSAGE = "Ошибка получения пользователя";
 
     private static final String FAIL_UPDATE_USER_MESSAGE = "Ошибка обновления пользователя";
+
+    private static final String FAIL_DELETE_USER_MESSAGE = "Ошибка удаления пользователя";
 
     private final ISupplyDao supplyDao;
 
@@ -175,8 +178,25 @@ public class UserDao implements IUserDao {
 
     @Override
     public void delete(User user) {
+        try (Connection c = DataBaseConnectionFactory.getConnection();
+             PreparedStatement ps1 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
+             PreparedStatement ps2 = c.prepareStatement(createDeleteUserSqlStatement())) {
+            c.setAutoCommit(false);
 
+            ps1.setObject(1, user.getUuid());
+
+            ps2.setObject(1, user.getUuid());
+            ps2.setObject(2, user.getDtUpdate());
+
+            ps1.execute();
+            ps2.execute();
+
+            c.commit();
+        } catch (SQLException e) {
+            throw new DeletingDBDataException(FAIL_DELETE_USER_MESSAGE, e.getCause());
+        }
     }
+
 
     private String createInsertUserSqlStatement() {
         StringBuilder sb = new StringBuilder("INSERT INTO app.users(");
@@ -265,6 +285,17 @@ public class UserDao implements IUserDao {
         sb.append(" WHERE ");
         sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
         sb.append("=?");
+        return sb.toString();
+    }
+
+    private String createDeleteUserSqlStatement() {
+        StringBuilder sb = new StringBuilder("DELETE FROM ");
+        sb.append(USER_TABLE_NAME);
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" = ? AND ");
+        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(" = ?");
         return sb.toString();
     }
 

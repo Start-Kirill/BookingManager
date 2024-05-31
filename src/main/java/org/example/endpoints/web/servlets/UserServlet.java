@@ -72,4 +72,14 @@ public class UserServlet extends HttpServlet {
         User user = this.userService.update(userCreateDto, uuid, dtUpdate);
         resp.getWriter().write(this.objectMapper.writeValueAsString(UserMapper.INSTANCE.userToUserDto(user)));
     }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
+        LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
+        if (uuid == null || dtUpdate == null) {
+            throw new IllegalArgumentException("Координаты отсутствуют или неверны");
+        }
+        this.userService.delete(uuid, dtUpdate);
+    }
 }

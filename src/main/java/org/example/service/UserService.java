@@ -87,7 +87,12 @@ public class UserService implements IUserService {
 
     @Override
     public void delete(UUID uuid, LocalDateTime dtUpdate) {
-
+        User actualUser = this.get(uuid);
+        LocalDateTime actualDtUpdate = actualUser.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
+        if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
+            throw new ObjectNotUpToDatedException(USER_NOT_UP_TO_DATED_MESSAGE);
+        }
+        this.userDao.delete(actualUser);
     }
 
     //    TODO
