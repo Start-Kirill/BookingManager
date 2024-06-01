@@ -2,13 +2,13 @@ package org.example.dao;
 
 import org.example.core.entity.Schedule;
 import org.example.core.entity.User;
+import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.IScheduleDao;
 import org.example.dao.api.IUserDao;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
-import org.example.dao.factory.ds.DataBaseConnectionFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -48,13 +48,17 @@ public class ScheduleDao implements IScheduleDao {
 
     private final IUserDao userDao;
 
-    public ScheduleDao(IUserDao userDao) {
+    private final IDataBaseConnection dataBaseConnection;
+
+    public ScheduleDao(IUserDao userDao,
+                       IDataBaseConnection dataBaseConnection) {
         this.userDao = userDao;
+        this.dataBaseConnection = dataBaseConnection;
     }
 
     @Override
     public Optional<Schedule> get(UUID uuid) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
             Schedule schedule = null;
 
@@ -74,7 +78,7 @@ public class ScheduleDao implements IScheduleDao {
 
     @Override
     public List<Schedule> get() {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetAllSqlStatement())) {
             List<Schedule> schedules = new ArrayList<>();
             ResultSet rs = ps.executeQuery();
@@ -90,7 +94,7 @@ public class ScheduleDao implements IScheduleDao {
 
     @Override
     public Schedule save(Schedule schedule) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createInsertSqlStatement())) {
             c.setAutoCommit(false);
 
@@ -113,7 +117,7 @@ public class ScheduleDao implements IScheduleDao {
 
     @Override
     public Schedule update(Schedule schedule) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createUpdateSqlStatement())) {
             Schedule updatedSchedule = null;
 
@@ -141,7 +145,7 @@ public class ScheduleDao implements IScheduleDao {
 
     @Override
     public void delete(Schedule schedule) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createDeleteSqlStatement())) {
             c.setAutoCommit(false);
 

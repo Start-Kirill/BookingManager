@@ -2,6 +2,7 @@ package org.example.dao.factory;
 
 import org.example.dao.UserDao;
 import org.example.dao.api.IUserDao;
+import org.example.dao.factory.ds.DataBaseConnectionFactory;
 
 public class UserDaoFactory {
 
@@ -14,7 +15,8 @@ public class UserDaoFactory {
         if (instance == null) {
             synchronized (UserDaoFactory.class) {
                 if (instance == null) {
-                    instance = new UserDao(SupplyDaoFactory.getInstance());
+                    instance = new UserDao(SupplyDaoFactory.getInstance(),
+                            DataBaseConnectionFactory.getInstance());
                 }
             }
         }

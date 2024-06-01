@@ -3,13 +3,13 @@ package org.example.dao;
 import org.example.core.entity.Supply;
 import org.example.core.entity.User;
 import org.example.core.enums.UserRole;
+import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.ISupplyDao;
 import org.example.dao.api.IUserDao;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
-import org.example.dao.factory.ds.DataBaseConnectionFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,13 +53,17 @@ public class UserDao implements IUserDao {
 
     private final ISupplyDao supplyDao;
 
-    public UserDao(ISupplyDao supplyDao) {
+    private final IDataBaseConnection dataBaseConnection;
+
+    public UserDao(ISupplyDao supplyDao,
+                   IDataBaseConnection dataBaseConnection) {
         this.supplyDao = supplyDao;
+        this.dataBaseConnection = dataBaseConnection;
     }
 
     @Override
     public Optional<User> get(UUID uuid) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
 
             ps.setObject(1, uuid);
@@ -79,7 +83,7 @@ public class UserDao implements IUserDao {
     @Override
     public List<User> get() {
 
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetAllSqlStatement())) {
 
             ResultSet rs = ps.executeQuery();
@@ -98,7 +102,7 @@ public class UserDao implements IUserDao {
 
     @Override
     public User save(User user) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createInsertUserSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createInsertUserSuppliesSqlStatement())) {
             c.setAutoCommit(false);
@@ -133,7 +137,7 @@ public class UserDao implements IUserDao {
 
     @Override
     public User update(User user) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createUpdateSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
              PreparedStatement ps3 = c.prepareStatement(createInsertUserSuppliesSqlStatement());
@@ -177,7 +181,7 @@ public class UserDao implements IUserDao {
 
     @Override
     public void delete(User user) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createDeleteUserSqlStatement())) {
 

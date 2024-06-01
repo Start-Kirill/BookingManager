@@ -1,12 +1,12 @@
 package org.example.dao;
 
 import org.example.core.entity.Supply;
+import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.ISupplyDao;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
-import org.example.dao.factory.ds.DataBaseConnectionFactory;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -45,9 +45,15 @@ public class SupplyDao implements ISupplyDao {
 
     private static final String FAIL_DELETE_SUPPLY_MESSAGE = "Ошибка удаления данных";
 
+    private final IDataBaseConnection dataBaseConnection;
+
+    public SupplyDao(IDataBaseConnection dataBaseConnection) {
+        this.dataBaseConnection = dataBaseConnection;
+    }
+
     @Override
     public Optional<Supply> get(UUID uuid) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
             Supply supply = null;
 
@@ -68,7 +74,7 @@ public class SupplyDao implements ISupplyDao {
     @Override
     public List<Supply> get() {
 
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetAllSqlStatement())) {
             List<Supply> supplies = new ArrayList<>();
             ResultSet rs = ps.executeQuery();
@@ -84,7 +90,7 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public List<Supply> get(List<UUID> uuids) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
 
             for (int i = 0; i < uuids.size(); i++) {
@@ -107,7 +113,7 @@ public class SupplyDao implements ISupplyDao {
     @Override
     public Supply save(Supply supply) {
 
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createInsertSqlStatement())) {
             c.setAutoCommit(false);
 
@@ -132,7 +138,7 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public Supply update(Supply supply) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createUpdateSqlStatement())) {
             Supply updatedSupply = null;
 
@@ -160,7 +166,7 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public void delete(Supply supply) {
-        try (Connection c = DataBaseConnectionFactory.getConnection();
+        try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createDeleteSqlStatement())) {
             c.setAutoCommit(false);
 
