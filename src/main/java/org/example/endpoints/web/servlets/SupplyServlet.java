@@ -28,6 +28,8 @@ public class SupplyServlet extends HttpServlet {
 
     private static final String URL_PART_BEFORE_DT_UPDATE_NAME = "dt_update";
 
+    private static final String COORDINATES_ABSENT_OR_WRONG_MESSAGE = "Координаты отсутствуют или неверны";
+
     private final ISupplyService supplyService;
 
     private final ObjectMapper objectMapper;
@@ -67,7 +69,7 @@ public class SupplyServlet extends HttpServlet {
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
         if (uuid == null || dtUpdate == null) {
-            throw new IllegalArgumentException("Координаты отсутствуют или неверны");
+            throw new IllegalArgumentException(COORDINATES_ABSENT_OR_WRONG_MESSAGE);
         }
         ServletInputStream inputStream = req.getInputStream();
         SupplyCreateDto supplyCreateDto = this.objectMapper.readValue(inputStream, SupplyCreateDto.class);
@@ -80,7 +82,7 @@ public class SupplyServlet extends HttpServlet {
         LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         if (uuid == null || dtUpdate == null) {
-            throw new IllegalArgumentException("Координаты отсутствуют или неверны");
+            throw new IllegalArgumentException(COORDINATES_ABSENT_OR_WRONG_MESSAGE);
         }
         this.supplyService.delete(uuid, dtUpdate);
     }

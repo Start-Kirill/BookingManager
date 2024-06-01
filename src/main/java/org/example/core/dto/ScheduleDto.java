@@ -12,8 +12,10 @@ public class ScheduleDto {
 
     private UUID master;
 
+    @JsonProperty("dt_start")
     private LocalDateTime dtStart;
 
+    @JsonProperty("dt_end")
     private LocalDateTime dtEnd;
 
     @JsonProperty("dt_create")

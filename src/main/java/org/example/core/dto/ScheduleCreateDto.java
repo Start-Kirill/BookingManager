@@ -1,5 +1,7 @@
 package org.example.core.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
@@ -8,8 +10,10 @@ public class ScheduleCreateDto {
 
     private UUID master;
 
+    @JsonProperty("dt_start")
     private LocalDateTime dtStart;
 
+    @JsonProperty("dt_end")
     private LocalDateTime dtEnd;
 
     public ScheduleCreateDto() {

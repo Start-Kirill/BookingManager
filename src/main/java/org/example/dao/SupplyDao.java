@@ -259,7 +259,9 @@ public class SupplyDao implements ISupplyDao {
     }
 
     private String createDeleteSqlStatement() {
-        StringBuilder sb = new StringBuilder("DELETE FROM app.supply WHERE ");
+        StringBuilder sb = new StringBuilder("DELETE FROM ");
+        sb.append(SUPPLY_TABLE_NAME);
+        sb.append(" WHERE ");
         sb.append(UUID_COLUMN_NAME);
         sb.append(" = ? AND ");
         sb.append(DT_UPDATE_COLUMN_NAME);

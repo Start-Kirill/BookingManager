@@ -15,7 +15,8 @@ public class ScheduleServiceFactory {
         if (instance == null) {
             synchronized (ScheduleServiceFactory.class) {
                 if (instance == null) {
-                    instance = new ScheduleService(ScheduleDaoFactory.getInstance());
+                    instance = new ScheduleService(ScheduleDaoFactory.getInstance(),
+                            UserServiceFactory.getInstance());
                 }
             }
         }

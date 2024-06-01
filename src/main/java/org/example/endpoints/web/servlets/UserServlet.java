@@ -27,6 +27,9 @@ public class UserServlet extends HttpServlet {
     private static final String URL_PART_BEFORE_UUID_NAME = "user";
 
     private static final String URL_PART_BEFORE_DT_UPDATE_NAME = "dt_update";
+
+    private static final String COORDINATES_ABSENT_OR_WRONG_MESSAGE = "Координаты отсутствуют или неверны";
+
     private final IUserService userService;
 
     private final ObjectMapper objectMapper;
@@ -65,7 +68,7 @@ public class UserServlet extends HttpServlet {
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
         if (uuid == null || dtUpdate == null) {
-            throw new IllegalArgumentException("Координаты отсутствуют или неверны");
+            throw new IllegalArgumentException(COORDINATES_ABSENT_OR_WRONG_MESSAGE);
         }
         ServletInputStream inputStream = req.getInputStream();
         UserCreateDto userCreateDto = this.objectMapper.readValue(inputStream, UserCreateDto.class);
@@ -78,7 +81,7 @@ public class UserServlet extends HttpServlet {
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
         if (uuid == null || dtUpdate == null) {
-            throw new IllegalArgumentException("Координаты отсутствуют или неверны");
+            throw new IllegalArgumentException(COORDINATES_ABSENT_OR_WRONG_MESSAGE);
         }
         this.userService.delete(uuid, dtUpdate);
     }

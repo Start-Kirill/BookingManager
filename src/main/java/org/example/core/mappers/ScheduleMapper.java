@@ -20,7 +20,7 @@ public interface ScheduleMapper {
     Schedule scheduleCreateDtoToSchedule(ScheduleCreateDto dto);
 
     @Mapping(target = "master", qualifiedByName = "userToUuid")
-    ScheduleDto scheduleToScheduleCreateDto(Schedule schedule);
+    ScheduleDto scheduleToScheduleDto(Schedule schedule);
 
     @Named("userToUuid")
     default UUID userToUuid(User user) {
