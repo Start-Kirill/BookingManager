@@ -14,7 +14,7 @@ public class ScheduleDaoFactory {
         if (instance == null) {
             synchronized (ScheduleDaoFactory.class) {
                 if (instance == null) {
-                    instance = new ScheduleDao();
+                    instance = new ScheduleDao(UserDaoFactory.getInstance());
                 }
             }
         }
