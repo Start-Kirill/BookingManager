@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.core.dto.SupplyCreateDto;
 import org.example.core.entity.Supply;
 import org.example.core.mappers.SupplyMapper;
+import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.exceptions.InvalidDurationException;
@@ -21,6 +22,16 @@ public class SupplyService implements ISupplyService {
 
     private static final String DURATION_TOO_LONG_MESSAGE = "Длительность услуги не может превышать " + MAX_DURATION + "минут";
 
+    private static final String IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL = "Невозможно получить услугу так как в качестве аргументы был передан null";
+
+    private static final String IMPOSSIBLE_GET_LIST_OF_SUPPLIES_CAUSE_NULL = "Невозможно получить список услуг так как в качестве аргументы был передан null";
+
+    private static final String IMPOSSIBLE_SAVE_SUPPLY_CAUSE_NULL = "Невозможно создать услугу так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_UPDATE_SUPPLY_CAUSE_NULL = "Невозможно обновить услугу так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL = "Невозможно удалить услугу так как в качестве аргумента был передан null";
+
     private final ISupplyDao supplyDao;
 
     public SupplyService(ISupplyDao supplyDao) {
@@ -30,6 +41,7 @@ public class SupplyService implements ISupplyService {
 
     @Override
     public Supply get(UUID uuid) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL, uuid);
         return this.supplyDao.get(uuid).orElseThrow();
     }
 
@@ -40,12 +52,13 @@ public class SupplyService implements ISupplyService {
 
     @Override
     public List<Supply> get(List<UUID> uuids) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_SUPPLIES_CAUSE_NULL, uuids);
         return this.supplyDao.get(uuids);
     }
 
     @Override
     public Supply save(SupplyCreateDto supplyCreateDto) {
-
+        NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_SUPPLY_CAUSE_NULL, supplyCreateDto);
         validate(supplyCreateDto);
 
         Supply supply = SupplyMapper.INSTANCE.supplyCreateDtoToSupply(supplyCreateDto);
@@ -61,6 +74,7 @@ public class SupplyService implements ISupplyService {
 
     @Override
     public Supply update(SupplyCreateDto supplyCreateDto, UUID uuid, LocalDateTime dtUpdate) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_SUPPLY_CAUSE_NULL, supplyCreateDto, uuid, dtUpdate);
         validate(supplyCreateDto);
 
         Supply actualSupply = this.get(uuid);
@@ -78,6 +92,7 @@ public class SupplyService implements ISupplyService {
 
     @Override
     public void delete(UUID uuid, LocalDateTime dtUpdate) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL, uuid, dtUpdate);
         Supply actualSupply = this.get(uuid);
         LocalDateTime actualDtUpdate = actualSupply.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {

@@ -3,6 +3,7 @@ package org.example.dao;
 import org.example.core.entity.Supply;
 import org.example.core.entity.User;
 import org.example.core.enums.UserRole;
+import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.ISupplyDao;
 import org.example.dao.api.IUserDao;
@@ -51,6 +52,15 @@ public class UserDao implements IUserDao {
 
     private static final String FAIL_DELETE_USER_MESSAGE = "Ошибка удаления пользователя";
 
+    private static final String IMPOSSIBLE_GET_USER_CAUSE_NULL = "Невозможно получить пользователя так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_SAVE_USER_CAUSE_NULL = "Невозможно создать пользователя так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_UPDATE_USER_CAUSE_NULL = "Невозможно обновить пользователя так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_DELETE_USER_CAUSE_NULL = "Невозможно удалить пользователя так как в качестве аргумента был передан null";
+
+
     private final ISupplyDao supplyDao;
 
     private final IDataBaseConnection dataBaseConnection;
@@ -63,6 +73,7 @@ public class UserDao implements IUserDao {
 
     @Override
     public Optional<User> get(UUID uuid) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_USER_CAUSE_NULL, uuid);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
 
@@ -102,6 +113,7 @@ public class UserDao implements IUserDao {
 
     @Override
     public User save(User user) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_USER_CAUSE_NULL, user);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createInsertUserSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createInsertUserSuppliesSqlStatement())) {
@@ -137,6 +149,7 @@ public class UserDao implements IUserDao {
 
     @Override
     public User update(User user) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_USER_CAUSE_NULL, user);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createUpdateSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
@@ -182,6 +195,7 @@ public class UserDao implements IUserDao {
 
     @Override
     public void delete(User user) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_USER_CAUSE_NULL, user);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createDeleteUserSqlStatement())) {

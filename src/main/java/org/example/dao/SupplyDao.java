@@ -1,6 +1,7 @@
 package org.example.dao;
 
 import org.example.core.entity.Supply;
+import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.ISupplyDao;
 import org.example.dao.exceptions.CreatingDBDataException;
@@ -45,6 +46,16 @@ public class SupplyDao implements ISupplyDao {
 
     private static final String FAIL_DELETE_SUPPLY_MESSAGE = "Ошибка удаления данных";
 
+    private static final String IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL = "Невозможно получить услугу так как в качестве аргументы был передан null";
+
+    private static final String IMPOSSIBLE_GET_LIST_OF_SUPPLIES_CAUSE_NULL = "Невозможно получить список услуг так как в качестве аргументы был передан null";
+
+    private static final String IMPOSSIBLE_SAVE_SUPPLY_CAUSE_NULL = "Невозможно создать услугу так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_UPDATE_SUPPLY_CAUSE_NULL = "Невозможно обновить услугу так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL = "Невозможно удалить услугу так как в качестве аргумента был передан null";
+
     private final IDataBaseConnection dataBaseConnection;
 
     public SupplyDao(IDataBaseConnection dataBaseConnection) {
@@ -53,6 +64,7 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public Optional<Supply> get(UUID uuid) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL, uuid);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
             Supply supply = null;
@@ -90,6 +102,7 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public List<Supply> get(List<UUID> uuids) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_SUPPLIES_CAUSE_NULL, uuids);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
 
@@ -112,7 +125,7 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public Supply save(Supply supply) {
-
+        NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_SUPPLY_CAUSE_NULL, supply);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createInsertSqlStatement())) {
             c.setAutoCommit(false);
@@ -138,6 +151,7 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public Supply update(Supply supply) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_SUPPLY_CAUSE_NULL, supply);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createUpdateSqlStatement())) {
             Supply updatedSupply = null;
@@ -166,6 +180,7 @@ public class SupplyDao implements ISupplyDao {
 
     @Override
     public void delete(Supply supply) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL, supply);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createDeleteSqlStatement())) {
             c.setAutoCommit(false);
@@ -284,6 +299,5 @@ public class SupplyDao implements ISupplyDao {
         LocalDateTime dtUpdate = rs.getTimestamp(DT_UPDATE_COLUMN_NAME).toLocalDateTime();
         return new Supply(uuid, name, price, duration, dtCreate, dtUpdate);
     }
-
 
 }

@@ -2,6 +2,7 @@ package org.example.dao;
 
 import org.example.core.entity.Schedule;
 import org.example.core.entity.User;
+import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.IScheduleDao;
 import org.example.dao.api.IUserDao;
@@ -46,6 +47,14 @@ public class ScheduleDao implements IScheduleDao {
 
     private static final String FAIL_DELETE_SCHEDULE_MESSAGE = "Ошибка удаления графика";
 
+    private static final String IMPOSSIBLE_GET_SCHEDULE_CAUSE_NULL = "Невозможно получить график так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_SAVE_SCHEDULE_CAUSE_NULL = "Невозможно создать график так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_UPDATE_SCHEDULE_CAUSE_NULL = "Невозможно обновить график так как в качестве аргумента был передан null";
+
+    private static final String IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL = "Невозможно удалить график так как в качестве аргумента был передан null";
+
     private final IUserDao userDao;
 
     private final IDataBaseConnection dataBaseConnection;
@@ -58,6 +67,7 @@ public class ScheduleDao implements IScheduleDao {
 
     @Override
     public Optional<Schedule> get(UUID uuid) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_SCHEDULE_CAUSE_NULL, uuid);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
             Schedule schedule = null;
@@ -94,6 +104,7 @@ public class ScheduleDao implements IScheduleDao {
 
     @Override
     public Schedule save(Schedule schedule) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_SCHEDULE_CAUSE_NULL, schedule);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createInsertSqlStatement())) {
             c.setAutoCommit(false);
@@ -117,6 +128,7 @@ public class ScheduleDao implements IScheduleDao {
 
     @Override
     public Schedule update(Schedule schedule) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_SCHEDULE_CAUSE_NULL, schedule);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createUpdateSqlStatement())) {
             Schedule updatedSchedule = null;
@@ -145,6 +157,7 @@ public class ScheduleDao implements IScheduleDao {
 
     @Override
     public void delete(Schedule schedule) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL, schedule);
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(createDeleteSqlStatement())) {
             c.setAutoCommit(false);
@@ -248,4 +261,5 @@ public class ScheduleDao implements IScheduleDao {
 
         return new Schedule(uuid, master, dtStart, dtEnd, dtCreate, dtUpdate);
     }
+
 }
