@@ -140,8 +140,7 @@ public class UserDao implements IUserDao {
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createUpdateSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
-             PreparedStatement ps3 = c.prepareStatement(createInsertUserSuppliesSqlStatement());
-             PreparedStatement ps4 = c.prepareStatement(createGetOneByUuidSqlStatement())) {
+             PreparedStatement ps3 = c.prepareStatement(createInsertUserSuppliesSqlStatement())) {
 
             c.setAutoCommit(false);
 
@@ -160,18 +159,20 @@ public class UserDao implements IUserDao {
                 ps3.addBatch();
             }
 
-            ps4.setObject(1, user.getUuid());
-
-            ps1.execute();
             ps2.execute();
             ps3.executeBatch();
 
-            ResultSet rs = ps4.executeQuery();
+            ResultSet rs = ps1.executeQuery();
 
-            User updatedUser = createUser(rs);
+            User updatedUser = null;
+            if (rs.next()) {
+                updatedUser = createUserWithoutSupplies(rs);
+                updatedUser.setSupplies(supplies);
 
-            rs.close();
+            }
+
             c.commit();
+            rs.close();
 
             return updatedUser;
         } catch (SQLException e) {
@@ -280,6 +281,7 @@ public class UserDao implements IUserDao {
         sb.append(" = ? AND ");
         sb.append(DT_UPDATE_COLUMN_NAME);
         sb.append(" = ?");
+        sb.append(" RETURNING *");
         return sb.toString();
     }
 
