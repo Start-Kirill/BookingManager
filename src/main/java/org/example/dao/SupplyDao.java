@@ -10,10 +10,7 @@ import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,7 +130,12 @@ public class SupplyDao implements ISupplyDao {
             ps1.setObject(1, supply.getUuid());
             ps1.setString(2, supply.getName());
             ps1.setBigDecimal(3, supply.getPrice());
-            ps1.setInt(4, supply.getDuration());
+            Integer duration = supply.getDuration();
+            if (duration != null) {
+                ps1.setInt(4, supply.getDuration());
+            } else {
+                ps1.setNull(4, Types.NULL);
+            }
             ps1.setObject(5, supply.getDtCreate());
             ps1.setObject(6, supply.getDtUpdate());
 
@@ -160,13 +162,22 @@ public class SupplyDao implements ISupplyDao {
 
             ps.setString(1, supply.getName());
             ps.setBigDecimal(2, supply.getPrice());
-            ps.setInt(3, supply.getDuration());
+            Integer duration = supply.getDuration();
+            if (duration != null) {
+                ps.setInt(3, supply.getDuration());
+            } else {
+                ps.setNull(3, Types.NULL);
+            }
             ps.setObject(4, supply.getUuid());
             ps.setObject(5, supply.getDtUpdate());
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 updatedSupply = createSupply(rs);
+            }
+
+            if (updatedSupply == null) {
+                throw new UpdatingDBDataException(FAIL_UPDATE_SUPPLY_MESSAGE);
             }
 
             c.commit();
@@ -188,7 +199,9 @@ public class SupplyDao implements ISupplyDao {
             ps.setObject(1, supply.getUuid());
             ps.setObject(2, supply.getDtUpdate());
 
-            ps.execute();
+            if (ps.executeUpdate() < 1) {
+                throw new DeletingDBDataException(FAIL_DELETE_SUPPLY_MESSAGE);
+            }
             c.commit();
         } catch (SQLException e) {
             throw new DeletingDBDataException(FAIL_DELETE_SUPPLY_MESSAGE, e.getCause());
@@ -294,7 +307,7 @@ public class SupplyDao implements ISupplyDao {
         UUID uuid = (UUID) rs.getObject(UUID_COLUMN_NAME);
         String name = rs.getString(NAME_COLUMN_NAME);
         BigDecimal price = rs.getBigDecimal(PRICE_COLUMN_NAME);
-        int duration = rs.getInt(DURATION_COLUMN_NAME);
+        Integer duration = (Integer) rs.getObject(DURATION_COLUMN_NAME);
         LocalDateTime dtCreate = rs.getTimestamp(DT_CREATE_COLUMN_NAME).toLocalDateTime();
         LocalDateTime dtUpdate = rs.getTimestamp(DT_UPDATE_COLUMN_NAME).toLocalDateTime();
         return new Supply(uuid, name, price, duration, dtCreate, dtUpdate);
