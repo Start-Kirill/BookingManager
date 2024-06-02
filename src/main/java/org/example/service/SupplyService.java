@@ -5,6 +5,7 @@ import org.example.core.entity.Supply;
 import org.example.core.mappers.SupplyMapper;
 import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
+import org.example.service.exceptions.InvalidDurationException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,11 @@ import java.util.UUID;
 
 public class SupplyService implements ISupplyService {
 
+    private static final Integer MAX_DURATION = 720;
+
     private static final String SUPPLY_NOT_UP_TO_DATED_MESSAGE = "Объект не актуален. Получите новый объект и попробуйте снова";
+
+    private static final String DURATION_TOO_LONG_MESSAGE = "Длительность услуги не может превышать " + MAX_DURATION + "минут";
 
     private final ISupplyDao supplyDao;
 
@@ -81,11 +86,11 @@ public class SupplyService implements ISupplyService {
         this.supplyDao.delete(actualSupply);
     }
 
-    //    TODO
     private void validate(SupplyCreateDto supplyCreateDto) {
-
+        Integer duration = supplyCreateDto.getDuration();
+        if (duration > MAX_DURATION) {
+            throw new InvalidDurationException(DURATION_TOO_LONG_MESSAGE);
+        }
 
     }
-
-
 }

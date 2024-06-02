@@ -8,16 +8,23 @@ import org.example.dao.api.IUserDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.api.IUserService;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
+import org.example.service.exceptions.PhoneNumberNotCorrectException;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UserService implements IUserService {
 
+    private static final String REG_EX_TO_CHECK_PHONE_NUMBER = "\\+\\d{3,15}";
+
     private static final String USER_NOT_UP_TO_DATED_MESSAGE = "Пользователь не актуален. Получите актуального пользователя и попробуйте снова";
+
+    private static final String INVALID_PHONE_NUMBER_MESSAGE = "Не верный формат номера телефона. Номер телефона должен быть в формате +[код страны][номер]. Повторите, пожалуйста, ввод";
 
     private final IUserDao userDao;
 
@@ -95,8 +102,18 @@ public class UserService implements IUserService {
         this.userDao.delete(actualUser);
     }
 
-    //    TODO
     private void validate(UserCreateDto userCreateDto) {
+        validatePhoneNumber(userCreateDto.getPhoneNumber());
+    }
+
+    private void validatePhoneNumber(String phone) {
+        if (phone != null) {
+            Pattern pattern = Pattern.compile(REG_EX_TO_CHECK_PHONE_NUMBER);
+            Matcher matcher = pattern.matcher(phone);
+            if (!matcher.matches()) {
+                throw new PhoneNumberNotCorrectException(INVALID_PHONE_NUMBER_MESSAGE);
+            }
+        }
     }
 
 

@@ -6,6 +6,7 @@ import org.example.core.mappers.ScheduleMapper;
 import org.example.dao.api.IScheduleDao;
 import org.example.service.api.IScheduleService;
 import org.example.service.api.IUserService;
+import org.example.service.exceptions.InvalidDateException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,8 @@ import java.util.UUID;
 public class ScheduleService implements IScheduleService {
 
     private static final String SCHEDULE_NOT_UP_TO_DATED_MESSAGE = "Изменяемый график не актуален. Получите новый график и попробуйте снова";
+    private static final String DATE_CAN_NOT_BE_BEFORE_NOW_MESSAGE = "Дата и время утанавливаемого графика не может быть в прошлом.";
+    private static final String START_DATE_CAN_NOT_BE_AFTER_END_DATE = "Дата и время начала не может быть после даты окончания";
 
     private final IScheduleDao scheduleDao;
 
@@ -83,8 +86,15 @@ public class ScheduleService implements IScheduleService {
         this.scheduleDao.delete(actualSchedule);
     }
 
-    //    TODO
     private void validate(ScheduleCreateDto scheduleCreateDto) {
-
+        LocalDateTime dtStart = scheduleCreateDto.getDtStart();
+        LocalDateTime dtEnd = scheduleCreateDto.getDtEnd();
+        LocalDateTime now = LocalDateTime.now();
+        if (dtStart.isBefore(now) || dtEnd.isBefore(now)) {
+            throw new InvalidDateException(DATE_CAN_NOT_BE_BEFORE_NOW_MESSAGE);
+        }
+        if (dtStart.isAfter(dtEnd)) {
+            throw new InvalidDateException(START_DATE_CAN_NOT_BE_AFTER_END_DATE);
+        }
     }
 }
