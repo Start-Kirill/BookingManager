@@ -128,7 +128,8 @@ public class UserDao implements IUserDao {
             } else {
                 ps1.setString(3, phoneNumber);
             }
-            ps1.setString(4, user.getUserRole().toString());
+            String userRole = user.getUserRole() == null ? null : user.getUserRole().toString();
+            ps1.setString(4, userRole);
             ps1.setObject(5, user.getDtCreate());
             ps1.setObject(6, user.getDtUpdate());
 
@@ -162,13 +163,14 @@ public class UserDao implements IUserDao {
             c.setAutoCommit(false);
 
             ps1.setString(1, user.getName());
-            ps1.setString(2, user.getPhoneNumber());
             String phoneNumber = user.getPhoneNumber();
             if (phoneNumber == null) {
-                ps1.setNull(3, Types.NULL);
+                ps1.setNull(2, Types.NULL);
             } else {
-                ps1.setString(3, phoneNumber);
+                ps1.setString(2, phoneNumber);
             }
+            String userRole = user.getUserRole() == null ? null : user.getUserRole().toString();
+            ps1.setString(3, userRole);
             ps1.setObject(4, user.getUuid());
             ps1.setObject(5, user.getDtUpdate());
 
@@ -191,6 +193,9 @@ public class UserDao implements IUserDao {
                 updatedUser = createUserWithoutSupplies(rs);
                 updatedUser.setSupplies(supplies);
 
+            }
+            if (updatedUser == null) {
+                throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
             }
 
             c.commit();
@@ -216,8 +221,11 @@ public class UserDao implements IUserDao {
             ps2.setObject(1, user.getUuid());
             ps2.setObject(2, user.getDtUpdate());
 
-            ps1.execute();
-            ps2.execute();
+            int userSuplyExecuteUpdate = ps1.executeUpdate();
+            int userExecuteUpdate = ps2.executeUpdate();
+            if (userSuplyExecuteUpdate < 1 || userExecuteUpdate < 1) {
+                throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
+            }
 
             c.commit();
         } catch (SQLException e) {
