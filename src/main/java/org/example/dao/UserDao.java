@@ -14,10 +14,7 @@ import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -125,7 +122,12 @@ public class UserDao implements IUserDao {
 
             ps1.setObject(1, userUuid);
             ps1.setString(2, user.getName());
-            ps1.setString(3, user.getPhoneNumber());
+            String phoneNumber = user.getPhoneNumber();
+            if (phoneNumber == null) {
+                ps1.setNull(3, Types.NULL);
+            } else {
+                ps1.setString(3, phoneNumber);
+            }
             ps1.setString(4, user.getUserRole().toString());
             ps1.setObject(5, user.getDtCreate());
             ps1.setObject(6, user.getDtUpdate());
@@ -161,7 +163,12 @@ public class UserDao implements IUserDao {
 
             ps1.setString(1, user.getName());
             ps1.setString(2, user.getPhoneNumber());
-            ps1.setString(3, user.getUserRole().toString());
+            String phoneNumber = user.getPhoneNumber();
+            if (phoneNumber == null) {
+                ps1.setNull(3, Types.NULL);
+            } else {
+                ps1.setString(3, phoneNumber);
+            }
             ps1.setObject(4, user.getUuid());
             ps1.setObject(5, user.getDtUpdate());
 

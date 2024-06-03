@@ -45,7 +45,7 @@ public class SupplyServlet extends HttpServlet {
         SupplyCreateDto supplyCreateDto = this.objectMapper.readValue(inputStream, SupplyCreateDto.class);
         Supply supply = this.supplyService.save(supplyCreateDto);
         SupplyDto dto = SupplyMapper.INSTANCE.supplyToSupplyDto(supply);
-        resp.setStatus(201);
+        resp.setStatus(HttpServletResponse.SC_CREATED);
         resp.getWriter().write(this.objectMapper.writeValueAsString(dto));
     }
 
@@ -68,9 +68,6 @@ public class SupplyServlet extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
-        if (uuid == null || dtUpdate == null) {
-            throw new IllegalArgumentException(COORDINATES_ABSENT_OR_WRONG_MESSAGE);
-        }
         ServletInputStream inputStream = req.getInputStream();
         SupplyCreateDto supplyCreateDto = this.objectMapper.readValue(inputStream, SupplyCreateDto.class);
         Supply supply = this.supplyService.update(supplyCreateDto, uuid, dtUpdate);
@@ -81,9 +78,6 @@ public class SupplyServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
-        if (uuid == null || dtUpdate == null) {
-            throw new IllegalArgumentException(COORDINATES_ABSENT_OR_WRONG_MESSAGE);
-        }
         this.supplyService.delete(uuid, dtUpdate);
     }
 

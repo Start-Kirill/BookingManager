@@ -11,6 +11,7 @@ import org.example.service.api.ISupplyService;
 import org.example.service.exceptions.InvalidSupplyBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -24,6 +25,15 @@ public class SupplyService implements ISupplyService {
     private static final Integer MAX_DURATION = 720;
 
     private static final String DURATION_FIELD_NAME = "duration";
+
+    private static final String PRICE_FIELD_NAME = "price";
+
+    private static final String NAME_FIELD_NAME = "name";
+
+    private static final String PRICE_CAN_NOT_BE_NULL_MESSAGE = "Поле price должно быть заполнено";
+
+    private static final String NAME_CAN_NOT_BE_NULL_MESSAGE = "Поле name должно быть заполнено";
+
 
     private static final String SUPPLY_NOT_UP_TO_DATED_MESSAGE = "Объект не актуален. Получите новый объект и попробуйте снова";
 
@@ -110,6 +120,17 @@ public class SupplyService implements ISupplyService {
 
     private void validate(SupplyCreateDto supplyCreateDto) {
         Map<String, String> errors = new HashMap<>();
+
+        BigDecimal price = supplyCreateDto.getPrice();
+        if (price == null) {
+            errors.put(PRICE_FIELD_NAME, PRICE_CAN_NOT_BE_NULL_MESSAGE);
+        }
+
+        String name = supplyCreateDto.getName();
+        if (name == null) {
+            errors.put(NAME_FIELD_NAME, NAME_CAN_NOT_BE_NULL_MESSAGE);
+        }
+
         Integer duration = supplyCreateDto.getDuration();
         if (duration != null && duration > MAX_DURATION) {
             errors.put(DURATION_FIELD_NAME, DURATION_TOO_LONG_MESSAGE);

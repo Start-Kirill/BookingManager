@@ -13,10 +13,7 @@ import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,8 +109,18 @@ public class ScheduleDao implements IScheduleDao {
             c.setAutoCommit(false);
 
             ps.setObject(1, schedule.getUuid());
-            ps.setObject(2, schedule.getMaster().getUuid());
-            ps.setObject(3, schedule.getDtStart());
+            LocalDateTime dtStart = schedule.getDtStart();
+            if (dtStart == null) {
+                ps.setNull(2, Types.NULL);
+            } else {
+                ps.setObject(2, dtStart);
+            }
+            LocalDateTime dtEnd = schedule.getDtEnd();
+            if (dtEnd == null) {
+                ps.setNull(3, Types.NULL);
+            } else {
+                ps.setObject(3, dtEnd);
+            }
             ps.setObject(4, schedule.getDtEnd());
             ps.setObject(5, schedule.getDtCreate());
             ps.setObject(6, schedule.getDtUpdate());
@@ -138,8 +145,18 @@ public class ScheduleDao implements IScheduleDao {
             c.setAutoCommit(false);
 
             ps.setObject(1, schedule.getMaster().getUuid());
-            ps.setObject(2, schedule.getDtStart());
-            ps.setObject(3, schedule.getDtEnd());
+            LocalDateTime dtStart = schedule.getDtStart();
+            if (dtStart == null) {
+                ps.setNull(2, Types.NULL);
+            } else {
+                ps.setObject(2, dtStart);
+            }
+            LocalDateTime dtEnd = schedule.getDtEnd();
+            if (dtEnd == null) {
+                ps.setNull(3, Types.NULL);
+            } else {
+                ps.setObject(3, dtEnd);
+            }
             ps.setObject(4, schedule.getUuid());
             ps.setObject(5, schedule.getDtUpdate());
 

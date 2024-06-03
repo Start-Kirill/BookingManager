@@ -25,6 +25,10 @@ public class ScheduleService implements IScheduleService {
 
     private static final String DT_END_FIELD_NAME = "dt_end";
 
+    private static final String MASTER_FIELD_NAME = "dt_end";
+
+    private static final String MASTER_CAN_NOT_BE_NULL_MESSAGE = "Поле Master должно быть заполнено";
+
     private static final String SCHEDULE_NOT_UP_TO_DATED_MESSAGE = "Изменяемый график не актуален. Получите новый график и попробуйте снова";
 
     private static final String DATE_CAN_NOT_BE_BEFORE_NOW_MESSAGE = "Дата и время утанавливаемого графика не может быть в прошлом.";
@@ -100,7 +104,7 @@ public class ScheduleService implements IScheduleService {
 
     @Override
     public void delete(UUID uuid, LocalDateTime dtUpdate) {
-        NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL, dtUpdate);
+        NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL, uuid, dtUpdate);
         Schedule actualSchedule = this.get(uuid);
         LocalDateTime actualDtUpdate = actualSchedule.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
@@ -111,16 +115,22 @@ public class ScheduleService implements IScheduleService {
 
     private void validate(ScheduleCreateDto scheduleCreateDto) {
         Map<String, String> errors = new HashMap<>();
+
+        UUID master = scheduleCreateDto.getMaster();
+        if (master == null) {
+            errors.put(MASTER_FIELD_NAME, MASTER_CAN_NOT_BE_NULL_MESSAGE);
+        }
+
         LocalDateTime dtStart = scheduleCreateDto.getDtStart();
         LocalDateTime dtEnd = scheduleCreateDto.getDtEnd();
         LocalDateTime now = LocalDateTime.now();
-        if (dtStart.isBefore(now)) {
+        if (dtStart != null && dtStart.isBefore(now)) {
             errors.put(DT_START_FIELD_NAME, DATE_CAN_NOT_BE_BEFORE_NOW_MESSAGE);
         }
-        if (dtEnd.isBefore(now)) {
+        if (dtEnd != null && dtEnd.isBefore(now)) {
             errors.put(DT_END_FIELD_NAME, DATE_CAN_NOT_BE_BEFORE_NOW_MESSAGE);
         }
-        if (dtStart.isAfter(dtEnd)) {
+        if (dtStart != null && dtEnd != null && dtStart.isAfter(dtEnd)) {
             errors.put(DT_START_FIELD_NAME, START_DATE_CAN_NOT_BE_AFTER_END_DATE);
         }
 

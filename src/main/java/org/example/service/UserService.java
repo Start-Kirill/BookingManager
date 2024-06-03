@@ -5,6 +5,7 @@ import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Supply;
 import org.example.core.entity.User;
 import org.example.core.enums.ErrorType;
+import org.example.core.enums.UserRole;
 import org.example.core.mappers.UserMapper;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IUserDao;
@@ -21,9 +22,17 @@ import java.util.regex.Pattern;
 
 public class UserService implements IUserService {
 
+    private static final String REG_EX_TO_CHECK_PHONE_NUMBER = "\\+\\d{3,15}";
+
     private static final String PHONE_NUMBER_FIELD_NAME = "phone_number";
 
-    private static final String REG_EX_TO_CHECK_PHONE_NUMBER = "\\+\\d{3,15}";
+    private static final String NAME_FIELD_NAME = "name";
+
+    private static final String USER_ROLE_FIELD_NAME = "role";
+
+    private static final String USER_ROLE_CAN_NOT_BE_NULL_MESSAGE = "Поле role должно быть заполнено";
+
+    private static final String NAME_CAN_NOT_BE_NULL_MESSAGE = "Поле name должно быть заполнено";
 
     private static final String USER_NOT_UP_TO_DATED_MESSAGE = "Пользователь не актуален. Получите актуального пользователя и попробуйте снова";
 
@@ -119,7 +128,19 @@ public class UserService implements IUserService {
 
     private void validate(UserCreateDto userCreateDto) {
         Map<String, String> errors = new HashMap<>();
-        if (!validatePhoneNumber(userCreateDto.getPhoneNumber())) {
+
+        String name = userCreateDto.getName();
+        if (name == null) {
+            errors.put(NAME_FIELD_NAME, NAME_CAN_NOT_BE_NULL_MESSAGE);
+        }
+
+        UserRole userRole = userCreateDto.getUserRole();
+        if (userRole == null) {
+            errors.put(USER_ROLE_FIELD_NAME, USER_ROLE_CAN_NOT_BE_NULL_MESSAGE);
+        }
+
+        String phoneNumber = userCreateDto.getPhoneNumber();
+        if (phoneNumber != null && !validatePhoneNumber(userCreateDto.getPhoneNumber())) {
             errors.put(PHONE_NUMBER_FIELD_NAME, INVALID_PHONE_NUMBER_MESSAGE);
         }
         if (!errors.isEmpty()) {
