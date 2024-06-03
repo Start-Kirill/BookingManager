@@ -1,7 +1,9 @@
 package org.example.dao;
 
+import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Schedule;
 import org.example.core.entity.User;
+import org.example.core.enums.ErrorType;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.IScheduleDao;
@@ -81,7 +83,7 @@ public class ScheduleDao implements IScheduleDao {
             rs.close();
             return Optional.ofNullable(schedule);
         } catch (SQLException e) {
-            throw new ReceivingDBDataException(FAIL_RECEIVE_SINGLE_SCHEDULE_MESSAGE, e.getCause());
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_SINGLE_SCHEDULE_MESSAGE)));
         }
     }
 
@@ -98,7 +100,7 @@ public class ScheduleDao implements IScheduleDao {
             rs.close();
             return schedules;
         } catch (SQLException e) {
-            throw new ReceivingDBDataException(FAIL_RECEIVE_LIST_SCHEDULES_MESSAGE, e.getCause());
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_SCHEDULES_MESSAGE)));
         }
     }
 
@@ -122,7 +124,7 @@ public class ScheduleDao implements IScheduleDao {
 
             return schedule;
         } catch (SQLException e) {
-            throw new CreatingDBDataException(FAIL_CREATE_SCHEDULE_MESSAGE, e.getCause());
+            throw new CreatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CREATE_SCHEDULE_MESSAGE)));
         }
     }
 
@@ -151,7 +153,7 @@ public class ScheduleDao implements IScheduleDao {
 
             return updatedSchedule;
         } catch (SQLException e) {
-            throw new UpdatingDBDataException(FAIL_UPDATE_SCHEDULE_MESSAGE, e.getCause());
+            throw new UpdatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SCHEDULE_MESSAGE)));
         }
     }
 
@@ -168,7 +170,7 @@ public class ScheduleDao implements IScheduleDao {
             ps.execute();
             c.commit();
         } catch (SQLException e) {
-            throw new DeletingDBDataException(FAIL_DELETE_SCHEDULE_MESSAGE, e.getCause());
+            throw new DeletingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SCHEDULE_MESSAGE)));
         }
     }
 

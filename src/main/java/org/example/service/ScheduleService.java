@@ -1,21 +1,29 @@
 package org.example.service;
 
 import org.example.core.dto.ScheduleCreateDto;
+import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Schedule;
+import org.example.core.enums.ErrorType;
 import org.example.core.mappers.ScheduleMapper;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IScheduleDao;
 import org.example.service.api.IScheduleService;
 import org.example.service.api.IUserService;
-import org.example.service.exceptions.InvalidDateException;
+import org.example.service.exceptions.InvalidScheduleBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class ScheduleService implements IScheduleService {
+
+    private static final String DT_START_FIELD_NAME = "dt_start";
+
+    private static final String DT_END_FIELD_NAME = "dt_end";
 
     private static final String SCHEDULE_NOT_UP_TO_DATED_MESSAGE = "Изменяемый график не актуален. Получите новый график и попробуйте снова";
 
@@ -80,7 +88,7 @@ public class ScheduleService implements IScheduleService {
         Schedule actualSchedule = this.get(uuid);
         LocalDateTime actualDtUpdate = actualSchedule.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
-            throw new ObjectNotUpToDatedException(SCHEDULE_NOT_UP_TO_DATED_MESSAGE);
+            throw new ObjectNotUpToDatedException(List.of(new ErrorResponse(ErrorType.ERROR, SCHEDULE_NOT_UP_TO_DATED_MESSAGE)));
         }
 
         actualSchedule.setMaster(this.userService.get(scheduleCreateDto.getMaster()));
@@ -96,20 +104,28 @@ public class ScheduleService implements IScheduleService {
         Schedule actualSchedule = this.get(uuid);
         LocalDateTime actualDtUpdate = actualSchedule.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
-            throw new ObjectNotUpToDatedException(SCHEDULE_NOT_UP_TO_DATED_MESSAGE);
+            throw new ObjectNotUpToDatedException(List.of(new ErrorResponse(ErrorType.ERROR, SCHEDULE_NOT_UP_TO_DATED_MESSAGE)));
         }
         this.scheduleDao.delete(actualSchedule);
     }
 
     private void validate(ScheduleCreateDto scheduleCreateDto) {
+        Map<String, String> errors = new HashMap<>();
         LocalDateTime dtStart = scheduleCreateDto.getDtStart();
         LocalDateTime dtEnd = scheduleCreateDto.getDtEnd();
         LocalDateTime now = LocalDateTime.now();
-        if (dtStart.isBefore(now) || dtEnd.isBefore(now)) {
-            throw new InvalidDateException(DATE_CAN_NOT_BE_BEFORE_NOW_MESSAGE);
+        if (dtStart.isBefore(now)) {
+            errors.put(DT_START_FIELD_NAME, DATE_CAN_NOT_BE_BEFORE_NOW_MESSAGE);
+        }
+        if (dtEnd.isBefore(now)) {
+            errors.put(DT_END_FIELD_NAME, DATE_CAN_NOT_BE_BEFORE_NOW_MESSAGE);
         }
         if (dtStart.isAfter(dtEnd)) {
-            throw new InvalidDateException(START_DATE_CAN_NOT_BE_AFTER_END_DATE);
+            errors.put(DT_START_FIELD_NAME, START_DATE_CAN_NOT_BE_AFTER_END_DATE);
+        }
+
+        if (!errors.isEmpty()) {
+            throw new InvalidScheduleBodyException(errors);
         }
     }
 }

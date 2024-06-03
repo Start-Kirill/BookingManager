@@ -1,6 +1,8 @@
 package org.example.dao;
 
+import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Supply;
+import org.example.core.enums.ErrorType;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.ISupplyDao;
@@ -75,7 +77,7 @@ public class SupplyDao implements ISupplyDao {
             rs.close();
             return Optional.ofNullable(supply);
         } catch (SQLException e) {
-            throw new ReceivingDBDataException(FAIL_RECEIVE_SINGLE_SUPPLY_MESSAGE, e.getCause());
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_SINGLE_SUPPLY_MESSAGE)));
         }
 
     }
@@ -93,7 +95,7 @@ public class SupplyDao implements ISupplyDao {
             rs.close();
             return supplies;
         } catch (SQLException e) {
-            throw new ReceivingDBDataException(FAIL_RECEIVE_LIST_SUPPLIES_MESSAGE, e.getCause());
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_SUPPLIES_MESSAGE)));
         }
     }
 
@@ -115,7 +117,7 @@ public class SupplyDao implements ISupplyDao {
             rs.close();
             return supplies;
         } catch (SQLException e) {
-            throw new ReceivingDBDataException(FAIL_RECEIVE_LIST_SUPPLIES_MESSAGE, e.getCause());
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_SUPPLIES_MESSAGE)));
         }
     }
 
@@ -145,7 +147,7 @@ public class SupplyDao implements ISupplyDao {
 
             return supply;
         } catch (SQLException e) {
-            throw new CreatingDBDataException(FAIL_CREATE_SUPPLY_MESSAGE, e.getCause());
+            throw new CreatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CREATE_SUPPLY_MESSAGE)));
         }
 
 
@@ -177,7 +179,7 @@ public class SupplyDao implements ISupplyDao {
             }
 
             if (updatedSupply == null) {
-                throw new UpdatingDBDataException(FAIL_UPDATE_SUPPLY_MESSAGE);
+                throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SUPPLY_MESSAGE)));
             }
 
             c.commit();
@@ -185,7 +187,7 @@ public class SupplyDao implements ISupplyDao {
 
             return updatedSupply;
         } catch (SQLException e) {
-            throw new UpdatingDBDataException(FAIL_UPDATE_SUPPLY_MESSAGE, e.getCause());
+            throw new UpdatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SUPPLY_MESSAGE)));
         }
     }
 
@@ -200,11 +202,11 @@ public class SupplyDao implements ISupplyDao {
             ps.setObject(2, supply.getDtUpdate());
 
             if (ps.executeUpdate() < 1) {
-                throw new DeletingDBDataException(FAIL_DELETE_SUPPLY_MESSAGE);
+                throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SUPPLY_MESSAGE)));
             }
             c.commit();
         } catch (SQLException e) {
-            throw new DeletingDBDataException(FAIL_DELETE_SUPPLY_MESSAGE, e.getCause());
+            throw new DeletingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SUPPLY_MESSAGE)));
         }
     }
 

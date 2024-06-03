@@ -1,22 +1,29 @@
 package org.example.service;
 
 import org.example.core.dto.SupplyCreateDto;
+import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Supply;
+import org.example.core.enums.ErrorType;
 import org.example.core.mappers.SupplyMapper;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
-import org.example.service.exceptions.InvalidDurationException;
+import org.example.service.exceptions.InvalidSupplyBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class SupplyService implements ISupplyService {
 
+
     private static final Integer MAX_DURATION = 720;
+
+    private static final String DURATION_FIELD_NAME = "duration";
 
     private static final String SUPPLY_NOT_UP_TO_DATED_MESSAGE = "Объект не актуален. Получите новый объект и попробуйте снова";
 
@@ -80,7 +87,7 @@ public class SupplyService implements ISupplyService {
         Supply actualSupply = this.get(uuid);
         LocalDateTime actualDtUpdate = actualSupply.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
-            throw new ObjectNotUpToDatedException(SUPPLY_NOT_UP_TO_DATED_MESSAGE);
+            throw new ObjectNotUpToDatedException(List.of(new ErrorResponse(ErrorType.ERROR, SUPPLY_NOT_UP_TO_DATED_MESSAGE)));
         }
 
         actualSupply.setName(supplyCreateDto.getName());
@@ -96,16 +103,19 @@ public class SupplyService implements ISupplyService {
         Supply actualSupply = this.get(uuid);
         LocalDateTime actualDtUpdate = actualSupply.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
-            throw new ObjectNotUpToDatedException(SUPPLY_NOT_UP_TO_DATED_MESSAGE);
+            throw new ObjectNotUpToDatedException(List.of(new ErrorResponse(ErrorType.ERROR, SUPPLY_NOT_UP_TO_DATED_MESSAGE)));
         }
         this.supplyDao.delete(actualSupply);
     }
 
     private void validate(SupplyCreateDto supplyCreateDto) {
+        Map<String, String> errors = new HashMap<>();
         Integer duration = supplyCreateDto.getDuration();
-        if (duration > MAX_DURATION) {
-            throw new InvalidDurationException(DURATION_TOO_LONG_MESSAGE);
+        if (duration != null && duration > MAX_DURATION) {
+            errors.put(DURATION_FIELD_NAME, DURATION_TOO_LONG_MESSAGE);
         }
-
+        if (!errors.isEmpty()) {
+            throw new InvalidSupplyBodyException(errors);
+        }
     }
 }

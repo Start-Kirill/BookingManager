@@ -1,25 +1,27 @@
 package org.example.service;
 
 import org.example.core.dto.UserCreateDto;
+import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Supply;
 import org.example.core.entity.User;
+import org.example.core.enums.ErrorType;
 import org.example.core.mappers.UserMapper;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IUserDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.api.IUserService;
+import org.example.service.exceptions.InvalidUserBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
-import org.example.service.exceptions.PhoneNumberNotCorrectException;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UserService implements IUserService {
+
+    private static final String PHONE_NUMBER_FIELD_NAME = "phone_number";
 
     private static final String REG_EX_TO_CHECK_PHONE_NUMBER = "\\+\\d{3,15}";
 
@@ -87,7 +89,7 @@ public class UserService implements IUserService {
         User actualUser = this.get(uuid);
         LocalDateTime actualDtUpdate = actualUser.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
-            throw new ObjectNotUpToDatedException(USER_NOT_UP_TO_DATED_MESSAGE);
+            throw new ObjectNotUpToDatedException(List.of(new ErrorResponse(ErrorType.ERROR, USER_NOT_UP_TO_DATED_MESSAGE)));
         }
 
         actualUser.setName(userCreateDto.getName());
@@ -110,24 +112,28 @@ public class UserService implements IUserService {
         User actualUser = this.get(uuid);
         LocalDateTime actualDtUpdate = actualUser.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
-            throw new ObjectNotUpToDatedException(USER_NOT_UP_TO_DATED_MESSAGE);
+            throw new ObjectNotUpToDatedException(List.of(new ErrorResponse(ErrorType.ERROR, USER_NOT_UP_TO_DATED_MESSAGE)));
         }
         this.userDao.delete(actualUser);
     }
 
     private void validate(UserCreateDto userCreateDto) {
-        validatePhoneNumber(userCreateDto.getPhoneNumber());
-    }
-
-    private void validatePhoneNumber(String phone) {
-        if (phone != null) {
-            Pattern pattern = Pattern.compile(REG_EX_TO_CHECK_PHONE_NUMBER);
-            Matcher matcher = pattern.matcher(phone);
-            if (!matcher.matches()) {
-                throw new PhoneNumberNotCorrectException(INVALID_PHONE_NUMBER_MESSAGE);
-            }
+        Map<String, String> errors = new HashMap<>();
+        if (!validatePhoneNumber(userCreateDto.getPhoneNumber())) {
+            errors.put(PHONE_NUMBER_FIELD_NAME, INVALID_PHONE_NUMBER_MESSAGE);
+        }
+        if (!errors.isEmpty()) {
+            throw new InvalidUserBodyException(errors);
         }
     }
 
+    private boolean validatePhoneNumber(String phone) {
+        if (phone != null) {
+            Pattern pattern = Pattern.compile(REG_EX_TO_CHECK_PHONE_NUMBER);
+            Matcher matcher = pattern.matcher(phone);
+            return matcher.matches();
+        }
+        return false;
+    }
 
 }

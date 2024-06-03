@@ -16,7 +16,6 @@ public class UserCreateDto {
     @JsonProperty("user_role")
     private UserRole userRole;
 
-    @JsonProperty(required = false)
     private List<UUID> supplies;
 
     public UserCreateDto() {

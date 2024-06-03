@@ -1,7 +1,9 @@
 package org.example.dao;
 
+import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Supply;
 import org.example.core.entity.User;
+import org.example.core.enums.ErrorType;
 import org.example.core.enums.UserRole;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IDataBaseConnection;
@@ -87,7 +89,7 @@ public class UserDao implements IUserDao {
             return Optional.ofNullable(user);
 
         } catch (SQLException e) {
-            throw new ReceivingDBDataException(FAIL_RECEIVE_USER_MESSAGE, e.getCause());
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_USER_MESSAGE)));
         }
     }
 
@@ -106,7 +108,7 @@ public class UserDao implements IUserDao {
             return listOfUsers;
 
         } catch (SQLException e) {
-            throw new ReceivingDBDataException(FAIL_RECEIVE_LIST_USERS_MESSAGE, e.getCause());
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_USERS_MESSAGE)));
         }
     }
 
@@ -142,7 +144,7 @@ public class UserDao implements IUserDao {
 
             return user;
         } catch (SQLException e) {
-            throw new CreatingDBDataException(FAIL_CREATE_USER_MESSAGE, e.getCause());
+            throw new CreatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CREATE_USER_MESSAGE)));
         }
     }
 
@@ -189,7 +191,7 @@ public class UserDao implements IUserDao {
 
             return updatedUser;
         } catch (SQLException e) {
-            throw new UpdatingDBDataException(FAIL_UPDATE_USER_MESSAGE, e.getCause());
+            throw new UpdatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
         }
     }
 
@@ -212,7 +214,7 @@ public class UserDao implements IUserDao {
 
             c.commit();
         } catch (SQLException e) {
-            throw new DeletingDBDataException(FAIL_DELETE_USER_MESSAGE, e.getCause());
+            throw new DeletingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_USER_MESSAGE)));
         }
     }
 
