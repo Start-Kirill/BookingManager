@@ -3,6 +3,7 @@ package org.example.dao;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.example.core.entity.Supply;
+import org.example.core.exceptions.NullArgumentException;
 import org.example.dao.ds.DataBaseConnection;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
@@ -124,7 +125,7 @@ class SupplyDaoTest {
         supplyDao.save(supplyOne);
 
         UUID nullUuid = null;
-        assertThrows(IllegalArgumentException.class, () -> this.supplyDao.get(nullUuid));
+        assertThrows(NullArgumentException.class, () -> this.supplyDao.get(nullUuid));
     }
 
     @Test
@@ -145,7 +146,7 @@ class SupplyDaoTest {
 
     @Test
     void shouldThrowWhileSaveNull() {
-        assertThrows(IllegalArgumentException.class, () -> supplyDao.save(null));
+        assertThrows(NullArgumentException.class, () -> supplyDao.save(null));
     }
 
     @Test
@@ -232,7 +233,7 @@ class SupplyDaoTest {
 
     @Test
     void shouldThrowWhileUpdateNull() {
-        assertThrows(IllegalArgumentException.class, () -> this.supplyDao.update(null));
+        assertThrows(NullArgumentException.class, () -> this.supplyDao.update(null));
     }
 
     @Test
