@@ -61,6 +61,7 @@ class UserDaoTest {
         try (Connection connection = dataBaseConnection.getConnection();
              Statement statement = connection.createStatement()) {
             statement.execute("TRUNCATE TABLE app.supply RESTART IDENTITY CASCADE");
+            statement.execute("TRUNCATE TABLE app.users RESTART IDENTITY CASCADE");
         } catch (Exception e) {
             throw new RuntimeException("Ошибка очищения базы данных", e);
         }
