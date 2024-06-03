@@ -59,7 +59,7 @@ public class UserServlet extends HttpServlet {
         ServletInputStream inputStream = req.getInputStream();
         UserCreateDto userCreateDto = this.objectMapper.readValue(inputStream, UserCreateDto.class);
         User user = this.userService.save(userCreateDto);
-        resp.setStatus(201);
+        resp.setStatus(HttpServletResponse.SC_CREATED);
         resp.getWriter().write(this.objectMapper.writeValueAsString(UserMapper.INSTANCE.userToUserDto(user)));
     }
 
