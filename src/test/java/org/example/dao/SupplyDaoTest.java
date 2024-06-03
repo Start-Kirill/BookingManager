@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.example.core.entity.Supply;
 import org.example.core.exceptions.NullArgumentException;
+import org.example.dao.api.ISupplyDao;
 import org.example.dao.ds.DataBaseConnection;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
@@ -34,7 +35,7 @@ class SupplyDaoTest {
     );
 
 
-    SupplyDao supplyDao;
+    ISupplyDao supplyDao;
 
     @BeforeAll
     static void beforeAll() {
