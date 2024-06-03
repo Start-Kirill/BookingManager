@@ -221,9 +221,9 @@ public class UserDao implements IUserDao {
             ps2.setObject(1, user.getUuid());
             ps2.setObject(2, user.getDtUpdate());
 
-            int userSuplyExecuteUpdate = ps1.executeUpdate();
+            int userSupplyExecuteUpdate = ps1.executeUpdate();
             int userExecuteUpdate = ps2.executeUpdate();
-            if (userSuplyExecuteUpdate < 1 || userExecuteUpdate < 1) {
+            if (userSupplyExecuteUpdate < 1 || userExecuteUpdate < 1) {
                 throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
             }
 
