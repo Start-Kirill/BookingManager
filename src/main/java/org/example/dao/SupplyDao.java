@@ -60,6 +60,10 @@ public class SupplyDao implements ISupplyDao {
 
     private static final String IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL = "Невозможно удалить услугу так как в качестве аргумента был передан null";
 
+    private static final String IMPOSSIBLE_CHECK_IF_EXISTS_SUPPLY_CAUSE_NULL = "Невозможно проверить существование услуги так как в качестве аргумента был передан null";
+
+    private static final String FAIL_CHECK_IF_SUPPLY_EXISTS_MESSAGE = "Ошибка проверки существования услуги";
+
     private final IDataBaseConnection dataBaseConnection;
 
 
@@ -229,6 +233,18 @@ public class SupplyDao implements ISupplyDao {
     }
 
     @Override
+    public boolean exists(UUID uuid) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_CHECK_IF_EXISTS_SUPPLY_CAUSE_NULL, uuid);
+        try (Connection c = dataBaseConnection.getConnection();
+             PreparedStatement existsPs = c.prepareStatement(createExistsSqlStatement())) {
+            existsPs.setObject(1, uuid);
+            return existsPs.execute();
+        } catch (SQLException e) {
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CHECK_IF_SUPPLY_EXISTS_MESSAGE)));
+        }
+    }
+
+    @Override
     public void delete(Supply supply) {
         NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL, supply);
         try (Connection c = dataBaseConnection.getConnection();
@@ -346,6 +362,15 @@ public class SupplyDao implements ISupplyDao {
             }
         });
         return performedUser;
+    }
+
+    private String createExistsSqlStatement() {
+        StringBuilder sb = new StringBuilder("SELECT EXISTS ( SELECT 1 FROM ");
+        sb.append(SUPPLY_TABLE_NAME);
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" = ?)");
+        return sb.toString();
     }
 
     private String createInsertSqlStatement() {

@@ -16,4 +16,6 @@ public interface IUserDao extends ICRUDDao<User> {
     Optional<User> getWithoutSupplies(UUID uuid);
 
     void systemUpdate(User user) throws SQLException;
+
+    boolean exists(UUID uuid);
 }

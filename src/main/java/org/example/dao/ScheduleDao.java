@@ -54,6 +54,10 @@ public class ScheduleDao implements IScheduleDao {
 
     private static final String IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL = "Невозможно удалить график так как в качестве аргумента был передан null";
 
+    private static final String IMPOSSIBLE_CHECK_IF_EXISTS_SCHEDULE_CAUSE_NULL = "Невозможно проверить существование графика так как в качестве аргумента был передан null";
+
+    private static final String FAIL_CHECK_IF_SCHEDULE_EXISTS_MESSAGE = "Ошибка проверки существования графика";
+
     private final IUserDao userDao;
 
     private final IDataBaseConnection dataBaseConnection;
@@ -145,6 +149,18 @@ public class ScheduleDao implements IScheduleDao {
     }
 
     @Override
+    public boolean exists(UUID uuid) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_CHECK_IF_EXISTS_SCHEDULE_CAUSE_NULL, uuid);
+        try (Connection c = dataBaseConnection.getConnection();
+             PreparedStatement existsPs = c.prepareStatement(createExistsSqlStatement())) {
+            existsPs.setObject(1, uuid);
+            return existsPs.execute();
+        } catch (SQLException e) {
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CHECK_IF_SCHEDULE_EXISTS_MESSAGE)));
+        }
+    }
+
+    @Override
     public void delete(Schedule schedule) {
         NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL, schedule);
         try (Connection c = dataBaseConnection.getConnection();
@@ -212,6 +228,15 @@ public class ScheduleDao implements IScheduleDao {
         }
         rs.close();
         return updatedSchedule;
+    }
+
+    private String createExistsSqlStatement() {
+        StringBuilder sb = new StringBuilder("SELECT EXISTS ( SELECT 1 FROM ");
+        sb.append(SCHEDULE_TABLE_NAME);
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" = ?)");
+        return sb.toString();
     }
 
     private String createInsertSqlStatement() {
@@ -303,5 +328,4 @@ public class ScheduleDao implements IScheduleDao {
 
         return new Schedule(uuid, master, dtStart, dtEnd, dtCreate, dtUpdate);
     }
-
 }

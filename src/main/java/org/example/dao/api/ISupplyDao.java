@@ -14,4 +14,6 @@ public interface ISupplyDao extends ICRUDDao<Supply> {
     Optional<Supply> getWithoutMasters(UUID uuid);
 
     void systemUpdate(Supply supply) throws SQLException;
+
+    boolean exists(UUID uuid);
 }
