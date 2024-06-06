@@ -2,6 +2,7 @@ package org.example.core.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -100,7 +101,7 @@ public class Supply {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Supply supply = (Supply) o;
-        return uuid.equals(supply.uuid) && name.equals(supply.name) && price.equals(supply.price) && duration.equals(supply.duration) && dtCreate.equals(supply.dtCreate) && dtUpdate.equals(supply.dtUpdate);
+        return uuid.equals(supply.uuid) && name.equals(supply.name) && price.equals(supply.price) && duration.equals(supply.duration) && dtCreate.truncatedTo(ChronoUnit.MILLIS).equals(supply.dtCreate.truncatedTo(ChronoUnit.MILLIS)) && dtUpdate.truncatedTo(ChronoUnit.MILLIS).equals(supply.dtUpdate.truncatedTo(ChronoUnit.MILLIS));
     }
 
     @Override

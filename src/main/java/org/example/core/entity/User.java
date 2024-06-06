@@ -3,6 +3,7 @@ package org.example.core.entity;
 import org.example.core.enums.UserRole;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -97,7 +98,7 @@ public class User {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return uuid.equals(user.uuid) && name.equals(user.name) && phoneNumber.equals(user.phoneNumber) && userRole == user.userRole && dtCreate.equals(user.dtCreate) && dtUpdate.equals(user.dtUpdate);
+        return uuid.equals(user.uuid) && name.equals(user.name) && phoneNumber.equals(user.phoneNumber) && userRole == user.userRole && dtCreate.truncatedTo(ChronoUnit.MILLIS).equals(user.dtCreate.truncatedTo(ChronoUnit.MILLIS)) && dtUpdate.truncatedTo(ChronoUnit.MILLIS).equals(user.dtUpdate.truncatedTo(ChronoUnit.MILLIS));
     }
 
     @Override
