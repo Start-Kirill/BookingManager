@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -20,6 +21,8 @@ public class SupplyDto {
      */
     private Integer duration;
 
+    private List<UUID> masters;
+
     @JsonProperty("dt_create")
     private LocalDateTime dtCreate;
 
@@ -29,11 +32,12 @@ public class SupplyDto {
     public SupplyDto() {
     }
 
-    public SupplyDto(UUID uuid, String name, BigDecimal price, Integer duration, LocalDateTime dtCreate, LocalDateTime dtUpdate) {
+    public SupplyDto(UUID uuid, String name, BigDecimal price, Integer duration, List<UUID> masters, LocalDateTime dtCreate, LocalDateTime dtUpdate) {
         this.uuid = uuid;
         this.name = name;
         this.price = price;
         this.duration = duration;
+        this.masters = masters;
         this.dtCreate = dtCreate;
         this.dtUpdate = dtUpdate;
     }
@@ -70,6 +74,14 @@ public class SupplyDto {
         this.duration = duration;
     }
 
+    public List<UUID> getMasters() {
+        return masters;
+    }
+
+    public void setMasters(List<UUID> masters) {
+        this.masters = masters;
+    }
+
     public LocalDateTime getDtCreate() {
         return dtCreate;
     }
@@ -90,25 +102,12 @@ public class SupplyDto {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SupplyDto that = (SupplyDto) o;
-        return Objects.equals(uuid, that.uuid) && Objects.equals(name, that.name) && Objects.equals(price, that.price) && Objects.equals(duration, that.duration) && Objects.equals(dtCreate, that.dtCreate) && Objects.equals(dtUpdate, that.dtUpdate);
+        SupplyDto supplyDto = (SupplyDto) o;
+        return Objects.equals(uuid, supplyDto.uuid) && Objects.equals(name, supplyDto.name) && Objects.equals(price, supplyDto.price) && Objects.equals(duration, supplyDto.duration) && Objects.equals(masters, supplyDto.masters) && Objects.equals(dtCreate, supplyDto.dtCreate) && Objects.equals(dtUpdate, supplyDto.dtUpdate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, name, price, duration, dtCreate, dtUpdate);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuffer sb = new StringBuffer("SupplyCreateDto{");
-        sb.append("uuid=").append(uuid);
-        sb.append(", name='").append(name).append('\'');
-        sb.append(", price=").append(price);
-        sb.append(", duration=").append(duration);
-        sb.append(", dtCreate=").append(dtCreate);
-        sb.append(", dtUpdate=").append(dtUpdate);
-        sb.append('}');
-        return sb.toString();
+        return Objects.hash(uuid, name, price, duration, masters, dtCreate, dtUpdate);
     }
 }

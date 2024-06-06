@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.core.dto.SupplyCreateDto;
 import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Supply;
+import org.example.core.entity.User;
 import org.example.core.enums.ErrorType;
 import org.example.core.mappers.SupplyMapper;
 import org.example.core.util.NullCheckUtil;
@@ -10,14 +11,12 @@ import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.exceptions.InvalidSupplyBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
+import org.example.service.factory.UserServiceFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class SupplyService implements ISupplyService {
 
@@ -51,6 +50,7 @@ public class SupplyService implements ISupplyService {
 
     private final ISupplyDao supplyDao;
 
+
     public SupplyService(ISupplyDao supplyDao) {
         this.supplyDao = supplyDao;
     }
@@ -80,6 +80,13 @@ public class SupplyService implements ISupplyService {
 
         Supply supply = SupplyMapper.INSTANCE.supplyCreateDtoToSupply(supplyCreateDto);
 
+        List<UUID> mastersUuid = supplyCreateDto.getMasters();
+        List<User> masters = new ArrayList<>();
+        if (mastersUuid != null) {
+            masters = UserServiceFactory.getInstance().get(mastersUuid);
+        }
+        supply.setMasters(masters);
+
         supply.setUuid(UUID.randomUUID());
         LocalDateTime now = LocalDateTime.now();
         supply.setDtCreate(now);
@@ -99,6 +106,13 @@ public class SupplyService implements ISupplyService {
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
             throw new ObjectNotUpToDatedException(List.of(new ErrorResponse(ErrorType.ERROR, SUPPLY_NOT_UP_TO_DATED_MESSAGE)));
         }
+
+        List<UUID> mastersUuid = supplyCreateDto.getMasters();
+        List<User> masters = new ArrayList<>();
+        if (mastersUuid != null) {
+            masters = UserServiceFactory.getInstance().get(mastersUuid);
+        }
+        actualSupply.setMasters(masters);
 
         actualSupply.setName(supplyCreateDto.getName());
         actualSupply.setDuration(supplyCreateDto.getDuration());

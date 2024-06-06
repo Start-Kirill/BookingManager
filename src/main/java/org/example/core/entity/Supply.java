@@ -2,6 +2,7 @@ package org.example.core.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -18,6 +19,8 @@ public class Supply {
      */
     private Integer duration;
 
+    private List<User> masters;
+
     private LocalDateTime dtCreate;
 
     private LocalDateTime dtUpdate;
@@ -26,11 +29,12 @@ public class Supply {
     public Supply() {
     }
 
-    public Supply(UUID uuid, String name, BigDecimal price, Integer duration, LocalDateTime dtCreate, LocalDateTime dtUpdate) {
+    public Supply(UUID uuid, String name, BigDecimal price, Integer duration, List<User> masters, LocalDateTime dtCreate, LocalDateTime dtUpdate) {
         this.uuid = uuid;
         this.name = name;
         this.price = price;
         this.duration = duration;
+        this.masters = masters;
         this.dtCreate = dtCreate;
         this.dtUpdate = dtUpdate;
     }
@@ -67,6 +71,14 @@ public class Supply {
         this.duration = duration;
     }
 
+    public List<User> getMasters() {
+        return masters;
+    }
+
+    public void setMasters(List<User> masters) {
+        this.masters = masters;
+    }
+
     public LocalDateTime getDtCreate() {
         return dtCreate;
     }
@@ -88,24 +100,11 @@ public class Supply {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Supply supply = (Supply) o;
-        return Objects.equals(uuid, supply.uuid) && Objects.equals(name, supply.name) && Objects.equals(price, supply.price) && Objects.equals(duration, supply.duration) && Objects.equals(dtCreate, supply.dtCreate) && Objects.equals(dtUpdate, supply.dtUpdate);
+        return uuid.equals(supply.uuid) && name.equals(supply.name) && price.equals(supply.price) && duration.equals(supply.duration) && dtCreate.equals(supply.dtCreate) && dtUpdate.equals(supply.dtUpdate);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(uuid, name, price, duration, dtCreate, dtUpdate);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuffer sb = new StringBuffer("Supply{");
-        sb.append("uuid=").append(uuid);
-        sb.append(", name='").append(name).append('\'');
-        sb.append(", price=").append(price);
-        sb.append(", duration=").append(duration);
-        sb.append(", dtCreate=").append(dtCreate);
-        sb.append(", dtUpdate=").append(dtUpdate);
-        sb.append('}');
-        return sb.toString();
     }
 }

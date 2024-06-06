@@ -40,6 +40,8 @@ public class UserService implements IUserService {
 
     private static final String IMPOSSIBLE_GET_USER_CAUSE_NULL = "Невозможно получить пользователя так как в качестве аргумента был передан null";
 
+    private static final String IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL = "Невозможно получить список пользователей так как в качестве аргумента был передан null";
+
     private static final String IMPOSSIBLE_SAVE_USER_CAUSE_NULL = "Невозможно создать пользователя так как в качестве аргумента был передан null";
 
     private static final String IMPOSSIBLE_UPDATE_USER_CAUSE_NULL = "Невозможно обновить пользователя так как в качестве аргумента был передан null";
@@ -65,6 +67,12 @@ public class UserService implements IUserService {
     @Override
     public List<User> get() {
         return this.userDao.get();
+    }
+
+    @Override
+    public List<User> get(List<UUID> uuids) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL, uuids);
+        return this.userDao.get(uuids);
     }
 
     @Override
@@ -156,5 +164,4 @@ public class UserService implements IUserService {
         }
         return false;
     }
-
 }

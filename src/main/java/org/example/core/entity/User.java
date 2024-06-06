@@ -17,9 +17,9 @@ public class User {
 
     private UserRole userRole;
 
-    private LocalDateTime dtCreate;
-
     private List<Supply> supplies;
+
+    private LocalDateTime dtCreate;
 
     private LocalDateTime dtUpdate;
 
@@ -97,12 +97,12 @@ public class User {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(uuid, user.uuid) && Objects.equals(name, user.name) && Objects.equals(phoneNumber, user.phoneNumber) && userRole == user.userRole && Objects.equals(dtCreate, user.dtCreate) && Objects.equals(supplies, user.supplies) && Objects.equals(dtUpdate, user.dtUpdate);
+        return uuid.equals(user.uuid) && name.equals(user.name) && phoneNumber.equals(user.phoneNumber) && userRole == user.userRole && dtCreate.equals(user.dtCreate) && dtUpdate.equals(user.dtUpdate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, name, phoneNumber, userRole, dtCreate, supplies, dtUpdate);
+        return Objects.hash(uuid, name, phoneNumber, userRole, dtCreate, dtUpdate);
     }
 
     @Override

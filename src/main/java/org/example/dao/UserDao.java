@@ -53,6 +53,8 @@ public class UserDao implements IUserDao {
 
     private static final String IMPOSSIBLE_GET_USER_CAUSE_NULL = "Невозможно получить пользователя так как в качестве аргумента был передан null";
 
+    private static final String IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL = "Невозможно получить список пользователей так как в качестве аргумента был передан null";
+
     private static final String IMPOSSIBLE_SAVE_USER_CAUSE_NULL = "Невозможно создать пользователя так как в качестве аргумента был передан null";
 
     private static final String IMPOSSIBLE_UPDATE_USER_CAUSE_NULL = "Невозможно обновить пользователя так как в качестве аргумента был передан null";
@@ -80,6 +82,84 @@ public class UserDao implements IUserDao {
 
             ResultSet rs = ps.executeQuery();
             User user = createUser(rs);
+
+            rs.close();
+
+            return Optional.ofNullable(user);
+
+        } catch (SQLException e) {
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_USER_MESSAGE)));
+        }
+    }
+
+    @Override
+    public List<User> get(List<UUID> uuids) {
+        if (uuids.isEmpty()) {
+            return new ArrayList<>();
+        }
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL, uuids);
+        try (Connection c = dataBaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
+
+            for (int i = 0; i < uuids.size(); i++) {
+                ps.setObject(i + 1, uuids.get(i));
+            }
+
+            ResultSet rs = ps.executeQuery();
+
+            List<User> listOfUsers = createListOfUsers(rs);
+
+            rs.close();
+
+            return listOfUsers;
+        } catch (SQLException e) {
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_USERS_MESSAGE)));
+        }
+    }
+
+    @Override
+    public List<User> getWithoutSupplies(List<UUID> uuids) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL, uuids);
+        if (uuids.isEmpty()) {
+            return new ArrayList<>();
+        }
+        try (Connection c = dataBaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(createGetAccordingToUuidsWithoutSuppliesSqlStatement(uuids.size()))) {
+
+            for (int i = 0; i < uuids.size(); i++) {
+                ps.setObject(i + 1, uuids.get(i));
+            }
+
+            ResultSet rs = ps.executeQuery();
+
+            List<User> listOfUsers = new ArrayList<>();
+
+            while (rs.next()) {
+                listOfUsers.add(createUserWithoutSupplies(rs));
+            }
+
+            rs.close();
+
+            return listOfUsers;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_USERS_MESSAGE)));
+        }
+    }
+
+    @Override
+    public Optional<User> getWithoutSupplies(UUID uuid) {
+        NullCheckUtil.checkNull(IMPOSSIBLE_GET_USER_CAUSE_NULL, uuid);
+        try (Connection c = dataBaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(createGetOneByUuidWithoutSuppliesSqlStatement())) {
+
+            ps.setObject(1, uuid);
+
+            ResultSet rs = ps.executeQuery();
+            User user = null;
+            if (rs.next()) {
+                user = createUserWithoutSupplies(rs);
+            }
 
             rs.close();
 
@@ -143,6 +223,10 @@ public class UserDao implements IUserDao {
             ps1.execute();
             ps2.executeBatch();
 
+            for (Supply supply : user.getSupplies()) {
+                this.supplyDao.systemUpdate(supply);
+            }
+
             c.commit();
 
             return user;
@@ -158,9 +242,23 @@ public class UserDao implements IUserDao {
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement ps1 = c.prepareStatement(createUpdateSqlStatement());
              PreparedStatement ps2 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
-             PreparedStatement ps3 = c.prepareStatement(createInsertUserSuppliesSqlStatement())) {
-
+             PreparedStatement ps3 = c.prepareStatement(createInsertUserSuppliesSqlStatement());
+             PreparedStatement ps4 = c.prepareStatement(createGetUserSuppliesSqlStatement())) {
             c.setAutoCommit(false);
+            ps4.setObject(1, user.getUuid());
+
+            List<Supply> performedSupplies = new ArrayList<>();
+            ResultSet rs = ps4.executeQuery();
+            while (rs.next()) {
+                UUID uuid = (UUID) rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
+                performedSupplies.add(this.supplyDao.get(uuid).orElseThrow());
+            }
+            for (Supply s : user.getSupplies()) {
+                if (!performedSupplies.contains(s)) {
+                    performedSupplies.add(s);
+                }
+            }
+            rs.close();
 
             ps1.setString(1, user.getName());
             String phoneNumber = user.getPhoneNumber();
@@ -186,11 +284,11 @@ public class UserDao implements IUserDao {
             ps2.execute();
             ps3.executeBatch();
 
-            ResultSet rs = ps1.executeQuery();
+            ResultSet rs2 = ps1.executeQuery();
 
             User updatedUser = null;
-            if (rs.next()) {
-                updatedUser = createUserWithoutSupplies(rs);
+            if (rs2.next()) {
+                updatedUser = createUserWithoutSupplies(rs2);
                 updatedUser.setSupplies(supplies);
 
             }
@@ -198,12 +296,34 @@ public class UserDao implements IUserDao {
                 throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
             }
 
-            c.commit();
-            rs.close();
+            rs2.close();
 
+            for (Supply performedSupply : performedSupplies) {
+                this.supplyDao.systemUpdate(performedSupply);
+            }
+            c.commit();
             return updatedUser;
         } catch (SQLException e) {
             throw new UpdatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
+        }
+    }
+
+
+    @Override
+    public void systemUpdate(User user) throws SQLException {
+        NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_USER_CAUSE_NULL, user);
+        try (Connection c = dataBaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(createSystemUpdateSqlStatement())) {
+            c.setAutoCommit(false);
+
+            ps.setObject(1, user.getUuid());
+            ps.setObject(2, user.getDtUpdate());
+
+            if (ps.executeUpdate() < 1) {
+                throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
+            }
+
+            c.commit();
         }
     }
 
@@ -225,6 +345,10 @@ public class UserDao implements IUserDao {
             int userExecuteUpdate = ps2.executeUpdate();
             if (userSupplyExecuteUpdate < 1 || userExecuteUpdate < 1) {
                 throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
+            }
+
+            for (Supply s : user.getSupplies()) {
+                this.supplyDao.systemUpdate(s);
             }
 
             c.commit();
@@ -262,6 +386,17 @@ public class UserDao implements IUserDao {
         return sb.toString();
     }
 
+    private String createGetUserSuppliesSqlStatement() {
+        StringBuilder sb = new StringBuilder("SELECT ");
+        sb.append(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
+        sb.append(" FROM ");
+        sb.append(USERS_SUPPLY_TABLE_NAME);
+        sb.append(" WHERE ");
+        sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
+        sb.append(" =?");
+        return sb.toString();
+    }
+
     private String createGetAllSqlStatement() {
         StringBuilder sb = new StringBuilder("SELECT ");
 
@@ -295,6 +430,61 @@ public class UserDao implements IUserDao {
         return sb.toString();
     }
 
+    private String createGetAllWithoutSuppliesSqlStatement() {
+        StringBuilder sb = new StringBuilder("SELECT ");
+
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(NAME_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(PHONE_NUMBER_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(USER_ROLE_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(DT_CREATE_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(" FROM ");
+        sb.append(USER_TABLE_NAME);
+
+        return sb.toString();
+    }
+
+    private String createGetAccordingToUuidsWithoutSuppliesSqlStatement(int number) {
+        StringBuilder sb = new StringBuilder(createGetAllWithoutSuppliesSqlStatement());
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" IN (");
+        boolean needComma = false;
+        for (int i = 0; i < number; i++) {
+            if (needComma) {
+                sb.append(", ");
+            }
+            sb.append("?");
+            needComma = true;
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    private String createGetAccordingToUuidsSqlStatement(int number) {
+        StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" IN (");
+        boolean needComma = false;
+        for (int i = 0; i < number; i++) {
+            if (needComma) {
+                sb.append(", ");
+            }
+            sb.append("?");
+            needComma = true;
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+
     private String createUpdateSqlStatement() {
         StringBuilder sb = new StringBuilder("UPDATE ");
         sb.append(USER_TABLE_NAME);
@@ -313,6 +503,20 @@ public class UserDao implements IUserDao {
         sb.append(DT_UPDATE_COLUMN_NAME);
         sb.append(" = ?");
         sb.append(" RETURNING *");
+        return sb.toString();
+    }
+
+    private String createSystemUpdateSqlStatement() {
+        StringBuilder sb = new StringBuilder("UPDATE ");
+        sb.append(USER_TABLE_NAME);
+        sb.append(" SET ");
+        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(" = NOW()");
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" = ? AND ");
+        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(" = ?");
         return sb.toString();
     }
 
@@ -344,6 +548,14 @@ public class UserDao implements IUserDao {
         return sb.toString();
     }
 
+    private String createGetOneByUuidWithoutSuppliesSqlStatement() {
+        StringBuilder sb = new StringBuilder(createGetAllWithoutSuppliesSqlStatement());
+        sb.append(" WHERE ");
+        sb.append(UUID_COLUMN_NAME);
+        sb.append(" = ?");
+        return sb.toString();
+    }
+
     private List<User> createListOfUsers(ResultSet rs) throws SQLException {
         Map<UUID, User> uuidUserMap = new HashMap<>();
         while (rs.next()) {
@@ -354,7 +566,7 @@ public class UserDao implements IUserDao {
             Object rawUuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
             if (rawUuid != null) {
                 UUID supplyUuid = (UUID) rawUuid;
-                user.getSupplies().add(this.supplyDao.get(supplyUuid).orElseThrow());
+                user.getSupplies().add(this.supplyDao.getWithoutMasters(supplyUuid).orElseThrow());
             }
 
             uuidUserMap.put(uuid, user);
@@ -375,6 +587,7 @@ public class UserDao implements IUserDao {
 
     private User createUser(ResultSet rs) throws SQLException {
         User user = null;
+        List<UUID> supplyUuids = new ArrayList<>();
         while (rs.next()) {
             if (user == null) {
                 user = createUserWithoutSupplies(rs);
@@ -382,8 +595,12 @@ public class UserDao implements IUserDao {
             Object rawSupplyUuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
             if (rawSupplyUuid != null) {
                 UUID supplyUuid = (UUID) rawSupplyUuid;
+                supplyUuids.add(supplyUuid);
                 user.getSupplies().add(this.supplyDao.get(supplyUuid).orElseThrow());
             }
+        }
+        if (user != null) {
+            user.setSupplies(this.supplyDao.get(supplyUuids));
         }
         return user;
     }
