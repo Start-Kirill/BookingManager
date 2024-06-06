@@ -76,6 +76,11 @@ public class UserService implements IUserService {
     }
 
     @Override
+    public boolean exists(UUID uuid) {
+        return this.userDao.exists(uuid);
+    }
+
+    @Override
     public User save(UserCreateDto userCreateDto) {
         NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_USER_CAUSE_NULL, userCreateDto);
         validate(userCreateDto);

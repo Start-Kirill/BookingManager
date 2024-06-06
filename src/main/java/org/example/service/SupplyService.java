@@ -74,6 +74,11 @@ public class SupplyService implements ISupplyService {
     }
 
     @Override
+    public boolean exists(UUID uuid) {
+        return this.supplyDao.exists(uuid);
+    }
+
+    @Override
     public Supply save(SupplyCreateDto supplyCreateDto) {
         NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_SUPPLY_CAUSE_NULL, supplyCreateDto);
         validate(supplyCreateDto);

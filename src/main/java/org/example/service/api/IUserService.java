@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface IUserService extends ICRUDService<User, UserCreateDto> {
 
     List<User> get(List<UUID> uuids);
+
+    boolean exists(UUID uuid);
 }

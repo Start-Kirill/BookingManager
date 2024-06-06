@@ -138,4 +138,9 @@ public class ScheduleService implements IScheduleService {
             throw new InvalidScheduleBodyException(errors);
         }
     }
+
+    @Override
+    public boolean exists(UUID uuid) {
+        return this.scheduleDao.exists(uuid);
+    }
 }
