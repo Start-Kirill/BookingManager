@@ -154,7 +154,12 @@ public class ScheduleDao implements IScheduleDao {
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement existsPs = c.prepareStatement(createExistsSqlStatement())) {
             existsPs.setObject(1, uuid);
-            return existsPs.execute();
+            ResultSet rs = existsPs.executeQuery();
+            boolean exists = false;
+            if (rs.next()) {
+                exists = rs.getBoolean(1);
+            }
+            return exists;
         } catch (SQLException e) {
             throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CHECK_IF_SCHEDULE_EXISTS_MESSAGE)));
         }
@@ -186,19 +191,19 @@ public class ScheduleDao implements IScheduleDao {
 
     private void insertSchedule(Schedule schedule, PreparedStatement insertSchedulePs) throws SQLException {
         insertSchedulePs.setObject(1, schedule.getUuid());
+        insertSchedulePs.setObject(2, schedule.getMaster().getUuid());
         LocalDateTime dtStart = schedule.getDtStart();
         if (dtStart == null) {
-            insertSchedulePs.setNull(2, Types.NULL);
+            insertSchedulePs.setNull(3, Types.NULL);
         } else {
-            insertSchedulePs.setObject(2, dtStart);
+            insertSchedulePs.setObject(3, dtStart);
         }
         LocalDateTime dtEnd = schedule.getDtEnd();
         if (dtEnd == null) {
-            insertSchedulePs.setNull(3, Types.NULL);
+            insertSchedulePs.setNull(4, Types.NULL);
         } else {
-            insertSchedulePs.setObject(3, dtEnd);
+            insertSchedulePs.setObject(4, dtEnd);
         }
-        insertSchedulePs.setObject(4, schedule.getDtEnd());
         insertSchedulePs.setObject(5, schedule.getDtCreate());
         insertSchedulePs.setObject(6, schedule.getDtUpdate());
 

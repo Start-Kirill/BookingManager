@@ -238,7 +238,12 @@ public class SupplyDao implements ISupplyDao {
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement existsPs = c.prepareStatement(createExistsSqlStatement())) {
             existsPs.setObject(1, uuid);
-            return existsPs.execute();
+            ResultSet rs = existsPs.executeQuery();
+            boolean exists = false;
+            if (rs.next()) {
+                exists = rs.getBoolean(1);
+            }
+            return exists;
         } catch (SQLException e) {
             throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CHECK_IF_SUPPLY_EXISTS_MESSAGE)));
         }
