@@ -11,6 +11,7 @@ import org.example.service.api.IScheduleService;
 import org.example.service.api.IUserService;
 import org.example.service.exceptions.InvalidScheduleBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
+import org.example.service.exceptions.SuchElementNotExistsException;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -42,6 +43,7 @@ public class ScheduleService implements IScheduleService {
     private static final String IMPOSSIBLE_UPDATE_SCHEDULE_CAUSE_NULL = "Невозможно обновить график так как в качестве аргумента был передан null";
 
     private static final String IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL = "Невозможно удалить график так как в качестве аргумента был передан null";
+    private static final String SUCH_SCHEDULE_NOT_EXISTS_MESSAGE = "Такого графика не существует";
 
     private final IScheduleDao scheduleDao;
 
@@ -57,6 +59,9 @@ public class ScheduleService implements IScheduleService {
     @Override
     public Schedule get(UUID uuid) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_SCHEDULE_CAUSE_NULL, uuid);
+        if (!exists(uuid)) {
+            throw new SuchElementNotExistsException(List.of(new ErrorResponse(ErrorType.ERROR, SUCH_SCHEDULE_NOT_EXISTS_MESSAGE)));
+        }
         return this.scheduleDao.get(uuid).orElseThrow();
     }
 
@@ -88,7 +93,6 @@ public class ScheduleService implements IScheduleService {
     public Schedule update(ScheduleCreateDto scheduleCreateDto, UUID uuid, LocalDateTime dtUpdate) {
         NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_SCHEDULE_CAUSE_NULL, scheduleCreateDto, uuid, dtUpdate);
         validate(scheduleCreateDto);
-
         Schedule actualSchedule = this.get(uuid);
         LocalDateTime actualDtUpdate = actualSchedule.getDtUpdate().truncatedTo(ChronoUnit.MILLIS);
         if (!actualDtUpdate.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS))) {
@@ -111,6 +115,11 @@ public class ScheduleService implements IScheduleService {
             throw new ObjectNotUpToDatedException(List.of(new ErrorResponse(ErrorType.ERROR, SCHEDULE_NOT_UP_TO_DATED_MESSAGE)));
         }
         this.scheduleDao.delete(actualSchedule);
+    }
+
+    @Override
+    public boolean exists(UUID uuid) {
+        return this.scheduleDao.exists(uuid);
     }
 
     private void validate(ScheduleCreateDto scheduleCreateDto) {
@@ -137,10 +146,5 @@ public class ScheduleService implements IScheduleService {
         if (!errors.isEmpty()) {
             throw new InvalidScheduleBodyException(errors);
         }
-    }
-
-    @Override
-    public boolean exists(UUID uuid) {
-        return this.scheduleDao.exists(uuid);
     }
 }

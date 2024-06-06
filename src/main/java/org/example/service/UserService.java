@@ -13,6 +13,7 @@ import org.example.service.api.ISupplyService;
 import org.example.service.api.IUserService;
 import org.example.service.exceptions.InvalidUserBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
+import org.example.service.exceptions.SuchElementNotExistsException;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -48,6 +49,9 @@ public class UserService implements IUserService {
 
     private static final String IMPOSSIBLE_DELETE_USER_CAUSE_NULL = "Невозможно удалить пользователя так как в качестве аргумента был передан null";
 
+    private static final String SUCH_USER_NOT_EXISTS_MESSAGE = "Такой пользователь не существует";
+    private static final String ONE_OR_MORE_USERS_NOT_EXISTS_MESSAGE = "Один или более пользователей не существуют";
+
     private final IUserDao userDao;
 
     private final ISupplyService supplyService;
@@ -61,6 +65,9 @@ public class UserService implements IUserService {
     @Override
     public User get(UUID uuid) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_USER_CAUSE_NULL, uuid);
+        if (!exists(uuid)) {
+            throw new SuchElementNotExistsException(List.of(new ErrorResponse(ErrorType.ERROR, SUCH_USER_NOT_EXISTS_MESSAGE)));
+        }
         return this.userDao.get(uuid).orElseThrow();
     }
 
@@ -72,6 +79,11 @@ public class UserService implements IUserService {
     @Override
     public List<User> get(List<UUID> uuids) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL, uuids);
+        uuids.forEach(u -> {
+            if (!exists(u)) {
+                throw new SuchElementNotExistsException(List.of(new ErrorResponse(ErrorType.ERROR, ONE_OR_MORE_USERS_NOT_EXISTS_MESSAGE)));
+            }
+        });
         return this.userDao.get(uuids);
     }
 

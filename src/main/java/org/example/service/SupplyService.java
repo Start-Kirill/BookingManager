@@ -11,6 +11,7 @@ import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.exceptions.InvalidSupplyBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
+import org.example.service.exceptions.SuchElementNotExistsException;
 import org.example.service.factory.UserServiceFactory;
 
 import java.math.BigDecimal;
@@ -48,6 +49,10 @@ public class SupplyService implements ISupplyService {
 
     private static final String IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL = "Невозможно удалить услугу так как в качестве аргумента был передан null";
 
+    private static final String SUCH_SUPPLY_NOT_EXISTS_MESSAGE = "Такой услуги не существует";
+
+    private static final String ONE_OR_MORE_SUPPLIES_NOT_EXISTS_MESSAGE = "Одна или более услуга из списка не существует";
+
     private final ISupplyDao supplyDao;
 
 
@@ -59,6 +64,9 @@ public class SupplyService implements ISupplyService {
     @Override
     public Supply get(UUID uuid) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL, uuid);
+        if (!exists(uuid)) {
+            throw new SuchElementNotExistsException(List.of(new ErrorResponse(ErrorType.ERROR, SUCH_SUPPLY_NOT_EXISTS_MESSAGE)));
+        }
         return this.supplyDao.get(uuid).orElseThrow();
     }
 
@@ -70,6 +78,11 @@ public class SupplyService implements ISupplyService {
     @Override
     public List<Supply> get(List<UUID> uuids) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_SUPPLIES_CAUSE_NULL, uuids);
+        uuids.forEach(u -> {
+            if (!exists(u)) {
+                throw new SuchElementNotExistsException(List.of(new ErrorResponse(ErrorType.ERROR, ONE_OR_MORE_SUPPLIES_NOT_EXISTS_MESSAGE)));
+            }
+        });
         return this.supplyDao.get(uuids);
     }
 
