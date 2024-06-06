@@ -68,16 +68,19 @@ public class ScheduleDao implements IScheduleDao {
     public Optional<Schedule> get(UUID uuid) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_SCHEDULE_CAUSE_NULL, uuid);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
+             PreparedStatement selectOnePs = c.prepareStatement(createGetOneByUuidSqlStatement())) {
             Schedule schedule = null;
 
-            ps.setObject(1, uuid);
+            selectOnePs.setObject(1, uuid);
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectOnePs.executeQuery();
+
             while (rs.next()) {
                 schedule = createSchedule(rs);
             }
+
             rs.close();
+
             return Optional.ofNullable(schedule);
         } catch (SQLException e) {
             throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_SINGLE_SCHEDULE_MESSAGE)));
@@ -88,13 +91,18 @@ public class ScheduleDao implements IScheduleDao {
     @Override
     public List<Schedule> get() {
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetAllSqlStatement())) {
+             PreparedStatement selectAllPs = c.prepareStatement(createGetAllSqlStatement())) {
+
             List<Schedule> schedules = new ArrayList<>();
-            ResultSet rs = ps.executeQuery();
+
+            ResultSet rs = selectAllPs.executeQuery();
+
             while (rs.next()) {
                 schedules.add(createSchedule(rs));
             }
+
             rs.close();
+
             return schedules;
         } catch (SQLException e) {
             throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_SCHEDULES_MESSAGE)));
@@ -105,27 +113,10 @@ public class ScheduleDao implements IScheduleDao {
     public Schedule save(Schedule schedule) {
         NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_SCHEDULE_CAUSE_NULL, schedule);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createInsertSqlStatement())) {
+             PreparedStatement insertSchedulePs = c.prepareStatement(createInsertSqlStatement())) {
             c.setAutoCommit(false);
 
-            ps.setObject(1, schedule.getUuid());
-            LocalDateTime dtStart = schedule.getDtStart();
-            if (dtStart == null) {
-                ps.setNull(2, Types.NULL);
-            } else {
-                ps.setObject(2, dtStart);
-            }
-            LocalDateTime dtEnd = schedule.getDtEnd();
-            if (dtEnd == null) {
-                ps.setNull(3, Types.NULL);
-            } else {
-                ps.setObject(3, dtEnd);
-            }
-            ps.setObject(4, schedule.getDtEnd());
-            ps.setObject(5, schedule.getDtCreate());
-            ps.setObject(6, schedule.getDtUpdate());
-
-            ps.execute();
+            insertSchedule(schedule, insertSchedulePs);
 
             c.commit();
 
@@ -139,36 +130,15 @@ public class ScheduleDao implements IScheduleDao {
     public Schedule update(Schedule schedule) {
         NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_SCHEDULE_CAUSE_NULL, schedule);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createUpdateSqlStatement())) {
-            Schedule updatedSchedule = null;
+             PreparedStatement updateSchedulePs = c.prepareStatement(createUpdateSqlStatement())) {
 
             c.setAutoCommit(false);
 
-            ps.setObject(1, schedule.getMaster().getUuid());
-            LocalDateTime dtStart = schedule.getDtStart();
-            if (dtStart == null) {
-                ps.setNull(2, Types.NULL);
-            } else {
-                ps.setObject(2, dtStart);
-            }
-            LocalDateTime dtEnd = schedule.getDtEnd();
-            if (dtEnd == null) {
-                ps.setNull(3, Types.NULL);
-            } else {
-                ps.setObject(3, dtEnd);
-            }
-            ps.setObject(4, schedule.getUuid());
-            ps.setObject(5, schedule.getDtUpdate());
-
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                updatedSchedule = createSchedule(rs);
-            }
+            Schedule updateSchedule = updateSchedule(schedule, updateSchedulePs);
 
             c.commit();
-            rs.close();
 
-            return updatedSchedule;
+            return updateSchedule;
         } catch (SQLException e) {
             throw new UpdatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SCHEDULE_MESSAGE)));
         }
@@ -181,14 +151,67 @@ public class ScheduleDao implements IScheduleDao {
              PreparedStatement ps = c.prepareStatement(createDeleteSqlStatement())) {
             c.setAutoCommit(false);
 
-            ps.setObject(1, schedule.getUuid());
-            ps.setObject(2, schedule.getDtUpdate());
+            deleteSchedule(schedule, ps);
 
-            ps.execute();
             c.commit();
         } catch (SQLException e) {
             throw new DeletingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SCHEDULE_MESSAGE)));
         }
+    }
+
+    private void deleteSchedule(Schedule schedule, PreparedStatement ps) throws SQLException {
+        ps.setObject(1, schedule.getUuid());
+        ps.setObject(2, schedule.getDtUpdate());
+
+        if (ps.executeUpdate() < 1) {
+            throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SCHEDULE_MESSAGE)));
+        }
+    }
+
+    private void insertSchedule(Schedule schedule, PreparedStatement insertSchedulePs) throws SQLException {
+        insertSchedulePs.setObject(1, schedule.getUuid());
+        LocalDateTime dtStart = schedule.getDtStart();
+        if (dtStart == null) {
+            insertSchedulePs.setNull(2, Types.NULL);
+        } else {
+            insertSchedulePs.setObject(2, dtStart);
+        }
+        LocalDateTime dtEnd = schedule.getDtEnd();
+        if (dtEnd == null) {
+            insertSchedulePs.setNull(3, Types.NULL);
+        } else {
+            insertSchedulePs.setObject(3, dtEnd);
+        }
+        insertSchedulePs.setObject(4, schedule.getDtEnd());
+        insertSchedulePs.setObject(5, schedule.getDtCreate());
+        insertSchedulePs.setObject(6, schedule.getDtUpdate());
+
+        insertSchedulePs.execute();
+    }
+
+    private Schedule updateSchedule(Schedule schedule, PreparedStatement updateSchedulePs) throws SQLException {
+        updateSchedulePs.setObject(1, schedule.getMaster().getUuid());
+        LocalDateTime dtStart = schedule.getDtStart();
+        if (dtStart == null) {
+            updateSchedulePs.setNull(2, Types.NULL);
+        } else {
+            updateSchedulePs.setObject(2, dtStart);
+        }
+        LocalDateTime dtEnd = schedule.getDtEnd();
+        if (dtEnd == null) {
+            updateSchedulePs.setNull(3, Types.NULL);
+        } else {
+            updateSchedulePs.setObject(3, dtEnd);
+        }
+        updateSchedulePs.setObject(4, schedule.getUuid());
+        updateSchedulePs.setObject(5, schedule.getDtUpdate());
+        ResultSet rs = updateSchedulePs.executeQuery();
+        Schedule updatedSchedule = null;
+        while (rs.next()) {
+            updatedSchedule = createSchedule(rs);
+        }
+        rs.close();
+        return updatedSchedule;
     }
 
     private String createInsertSqlStatement() {

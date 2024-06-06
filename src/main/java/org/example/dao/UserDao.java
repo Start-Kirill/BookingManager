@@ -76,11 +76,12 @@ public class UserDao implements IUserDao {
     public Optional<User> get(UUID uuid) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_USER_CAUSE_NULL, uuid);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
+             PreparedStatement selectOnePs = c.prepareStatement(createGetOneByUuidSqlStatement())) {
 
-            ps.setObject(1, uuid);
+            selectOnePs.setObject(1, uuid);
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectOnePs.executeQuery();
+
             User user = createUser(rs);
 
             rs.close();
@@ -99,13 +100,13 @@ public class UserDao implements IUserDao {
         }
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL, uuids);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
+             PreparedStatement selectInUuidsPs = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
 
             for (int i = 0; i < uuids.size(); i++) {
-                ps.setObject(i + 1, uuids.get(i));
+                selectInUuidsPs.setObject(i + 1, uuids.get(i));
             }
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectInUuidsPs.executeQuery();
 
             List<User> listOfUsers = createListOfUsers(rs);
 
@@ -124,13 +125,13 @@ public class UserDao implements IUserDao {
             return new ArrayList<>();
         }
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetAccordingToUuidsWithoutSuppliesSqlStatement(uuids.size()))) {
+             PreparedStatement selectInUuidsSuppliesFreePs = c.prepareStatement(createGetAccordingToUuidsWithoutSuppliesSqlStatement(uuids.size()))) {
 
             for (int i = 0; i < uuids.size(); i++) {
-                ps.setObject(i + 1, uuids.get(i));
+                selectInUuidsSuppliesFreePs.setObject(i + 1, uuids.get(i));
             }
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectInUuidsSuppliesFreePs.executeQuery();
 
             List<User> listOfUsers = new ArrayList<>();
 
@@ -142,7 +143,6 @@ public class UserDao implements IUserDao {
 
             return listOfUsers;
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_USERS_MESSAGE)));
         }
     }
@@ -151,11 +151,11 @@ public class UserDao implements IUserDao {
     public Optional<User> getWithoutSupplies(UUID uuid) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_USER_CAUSE_NULL, uuid);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetOneByUuidWithoutSuppliesSqlStatement())) {
+             PreparedStatement selectOneSuppliesFreePs = c.prepareStatement(createGetOneByUuidWithoutSuppliesSqlStatement())) {
 
-            ps.setObject(1, uuid);
+            selectOneSuppliesFreePs.setObject(1, uuid);
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectOneSuppliesFreePs.executeQuery();
             User user = null;
             if (rs.next()) {
                 user = createUserWithoutSupplies(rs);
@@ -174,9 +174,9 @@ public class UserDao implements IUserDao {
     public List<User> get() {
 
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetAllSqlStatement())) {
+             PreparedStatement selectAllPs = c.prepareStatement(createGetAllSqlStatement())) {
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectAllPs.executeQuery();
 
             List<User> listOfUsers = createListOfUsers(rs);
 
@@ -194,38 +194,15 @@ public class UserDao implements IUserDao {
     public User save(User user) {
         NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_USER_CAUSE_NULL, user);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps1 = c.prepareStatement(createInsertUserSqlStatement());
-             PreparedStatement ps2 = c.prepareStatement(createInsertUserSuppliesSqlStatement())) {
+             PreparedStatement insertUserPs = c.prepareStatement(createInsertUserSqlStatement());
+             PreparedStatement insertsUserSuppliesPS = c.prepareStatement(createInsertUserSuppliesSqlStatement())) {
             c.setAutoCommit(false);
 
-            UUID userUuid = user.getUuid();
+            insertUser(user, insertUserPs);
 
-            ps1.setObject(1, userUuid);
-            ps1.setString(2, user.getName());
-            String phoneNumber = user.getPhoneNumber();
-            if (phoneNumber == null) {
-                ps1.setNull(3, Types.NULL);
-            } else {
-                ps1.setString(3, phoneNumber);
-            }
-            String userRole = user.getUserRole() == null ? null : user.getUserRole().toString();
-            ps1.setString(4, userRole);
-            ps1.setObject(5, user.getDtCreate());
-            ps1.setObject(6, user.getDtUpdate());
+            insertUserSupplies(user, insertsUserSuppliesPS);
 
-            List<Supply> supplies = user.getSupplies();
-            ps2.setObject(1, userUuid);
-            for (Supply s : supplies) {
-                ps2.setObject(2, s.getUuid());
-                ps2.addBatch();
-            }
-
-            ps1.execute();
-            ps2.executeBatch();
-
-            for (Supply supply : user.getSupplies()) {
-                this.supplyDao.systemUpdate(supply);
-            }
+            updateSupplies(user.getSupplies());
 
             c.commit();
 
@@ -240,68 +217,24 @@ public class UserDao implements IUserDao {
     public User update(User user) {
         NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_USER_CAUSE_NULL, user);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps1 = c.prepareStatement(createUpdateSqlStatement());
-             PreparedStatement ps2 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
-             PreparedStatement ps3 = c.prepareStatement(createInsertUserSuppliesSqlStatement());
-             PreparedStatement ps4 = c.prepareStatement(createGetUserSuppliesSqlStatement())) {
+             PreparedStatement updateUserPs = c.prepareStatement(createUpdateSqlStatement());
+             PreparedStatement deleteUserSuppliesPs = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
+             PreparedStatement insertUserSuppliesPs = c.prepareStatement(createInsertUserSuppliesSqlStatement());
+             PreparedStatement selectUserSuppliesPs = c.prepareStatement(createGetUserSuppliesSqlStatement())) {
             c.setAutoCommit(false);
-            ps4.setObject(1, user.getUuid());
 
-            List<Supply> performedSupplies = new ArrayList<>();
-            ResultSet rs = ps4.executeQuery();
-            while (rs.next()) {
-                UUID uuid = (UUID) rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
-                performedSupplies.add(this.supplyDao.get(uuid).orElseThrow());
-            }
-            for (Supply s : user.getSupplies()) {
-                if (!performedSupplies.contains(s)) {
-                    performedSupplies.add(s);
-                }
-            }
-            rs.close();
+            List<Supply> performedSupplies = findPerformedSupplies(user, selectUserSuppliesPs);
 
-            ps1.setString(1, user.getName());
-            String phoneNumber = user.getPhoneNumber();
-            if (phoneNumber == null) {
-                ps1.setNull(2, Types.NULL);
-            } else {
-                ps1.setString(2, phoneNumber);
-            }
-            String userRole = user.getUserRole() == null ? null : user.getUserRole().toString();
-            ps1.setString(3, userRole);
-            ps1.setObject(4, user.getUuid());
-            ps1.setObject(5, user.getDtUpdate());
+            User updatedUser = updatedUser(user, updateUserPs);
 
-            ps2.setObject(1, user.getUuid());
+            deleteUserSupplies(user, deleteUserSuppliesPs);
 
-            List<Supply> supplies = user.getSupplies();
-            ps3.setObject(1, user.getUuid());
-            for (Supply s : supplies) {
-                ps3.setObject(2, s.getUuid());
-                ps3.addBatch();
-            }
+            insertUserSupplies(user, insertUserSuppliesPs);
 
-            ps2.execute();
-            ps3.executeBatch();
+            updateSupplies(performedSupplies);
 
-            ResultSet rs2 = ps1.executeQuery();
-
-            User updatedUser = null;
-            if (rs2.next()) {
-                updatedUser = createUserWithoutSupplies(rs2);
-                updatedUser.setSupplies(supplies);
-
-            }
-            if (updatedUser == null) {
-                throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
-            }
-
-            rs2.close();
-
-            for (Supply performedSupply : performedSupplies) {
-                this.supplyDao.systemUpdate(performedSupply);
-            }
             c.commit();
+
             return updatedUser;
         } catch (SQLException e) {
             throw new UpdatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
@@ -313,13 +246,13 @@ public class UserDao implements IUserDao {
     public void systemUpdate(User user) throws SQLException {
         NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_USER_CAUSE_NULL, user);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createSystemUpdateSqlStatement())) {
+             PreparedStatement systemUpdateUserPs = c.prepareStatement(createSystemUpdateSqlStatement())) {
             c.setAutoCommit(false);
 
-            ps.setObject(1, user.getUuid());
-            ps.setObject(2, user.getDtUpdate());
+            systemUpdateUserPs.setObject(1, user.getUuid());
+            systemUpdateUserPs.setObject(2, user.getDtUpdate());
 
-            if (ps.executeUpdate() < 1) {
+            if (systemUpdateUserPs.executeUpdate() < 1) {
                 throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
             }
 
@@ -331,30 +264,116 @@ public class UserDao implements IUserDao {
     public void delete(User user) {
         NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_USER_CAUSE_NULL, user);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps1 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
-             PreparedStatement ps2 = c.prepareStatement(createDeleteUserSqlStatement())) {
+             PreparedStatement deleteUserSuppliesPs = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
+             PreparedStatement deleteUserPs = c.prepareStatement(createDeleteUserSqlStatement())) {
 
             c.setAutoCommit(false);
 
-            ps1.setObject(1, user.getUuid());
+            deleteUserSupplies(user, deleteUserSuppliesPs);
 
-            ps2.setObject(1, user.getUuid());
-            ps2.setObject(2, user.getDtUpdate());
+            deleteUser(user, deleteUserPs);
 
-            int userSupplyExecuteUpdate = ps1.executeUpdate();
-            int userExecuteUpdate = ps2.executeUpdate();
-            if (userSupplyExecuteUpdate < 1 || userExecuteUpdate < 1) {
-                throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
-            }
-
-            for (Supply s : user.getSupplies()) {
-                this.supplyDao.systemUpdate(s);
-            }
+            updateSupplies(user.getSupplies());
 
             c.commit();
         } catch (SQLException e) {
             throw new DeletingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_USER_MESSAGE)));
         }
+    }
+
+    private void deleteUser(User user, PreparedStatement deleteUserPs) throws SQLException {
+        deleteUserPs.setObject(1, user.getUuid());
+        deleteUserPs.setObject(2, user.getDtUpdate());
+        int userExecuteUpdate = deleteUserPs.executeUpdate();
+        if (userExecuteUpdate < 1) {
+            throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
+        }
+    }
+
+    private void updateSupplies(List<Supply> user) throws SQLException {
+        for (Supply supply : user) {
+            this.supplyDao.systemUpdate(supply);
+        }
+    }
+
+    private void insertUser(User user, PreparedStatement insertUserPs) throws SQLException {
+        UUID userUuid = user.getUuid();
+
+        insertUserPs.setObject(1, userUuid);
+        insertUserPs.setString(2, user.getName());
+        String phoneNumber = user.getPhoneNumber();
+        if (phoneNumber == null) {
+            insertUserPs.setNull(3, Types.NULL);
+        } else {
+            insertUserPs.setString(3, phoneNumber);
+        }
+        String userRole = user.getUserRole() == null ? null : user.getUserRole().toString();
+        insertUserPs.setString(4, userRole);
+        insertUserPs.setObject(5, user.getDtCreate());
+        insertUserPs.setObject(6, user.getDtUpdate());
+        insertUserPs.execute();
+    }
+
+    private void insertUserSupplies(User user, PreparedStatement insertsUserSuppliesPS) throws SQLException {
+        List<Supply> supplies = user.getSupplies();
+        insertsUserSuppliesPS.setObject(1, user.getUuid());
+        for (Supply s : supplies) {
+            insertsUserSuppliesPS.setObject(2, s.getUuid());
+            insertsUserSuppliesPS.addBatch();
+        }
+
+        insertsUserSuppliesPS.executeBatch();
+    }
+
+    private void deleteUserSupplies(User user, PreparedStatement deleteUserSuppliesPs) throws SQLException {
+        deleteUserSuppliesPs.setObject(1, user.getUuid());
+        deleteUserSuppliesPs.execute();
+    }
+
+    private User updatedUser(User user, PreparedStatement updateUserPs) throws SQLException {
+        updateUserPs.setString(1, user.getName());
+        String phoneNumber = user.getPhoneNumber();
+        if (phoneNumber == null) {
+            updateUserPs.setNull(2, Types.NULL);
+        } else {
+            updateUserPs.setString(2, phoneNumber);
+        }
+        String userRole = user.getUserRole() == null ? null : user.getUserRole().toString();
+        updateUserPs.setString(3, userRole);
+        updateUserPs.setObject(4, user.getUuid());
+        updateUserPs.setObject(5, user.getDtUpdate());
+
+        ResultSet rs = updateUserPs.executeQuery();
+
+        User updatedUser = null;
+        if (rs.next()) {
+            updatedUser = createUserWithoutSupplies(rs);
+            updatedUser.setSupplies(user.getSupplies());
+
+        }
+        if (updatedUser == null) {
+            throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
+        }
+
+        rs.close();
+        return updatedUser;
+    }
+
+    private List<Supply> findPerformedSupplies(User user, PreparedStatement selectUserSuppliesPs) throws SQLException {
+        List<Supply> performedSupplies = new ArrayList<>();
+        selectUserSuppliesPs.setObject(1, user.getUuid());
+        ResultSet rs = selectUserSuppliesPs.executeQuery();
+        while (rs.next()) {
+            UUID uuid = (UUID) rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
+            performedSupplies.add(this.supplyDao.get(uuid).orElseThrow());
+        }
+        for (Supply s : user.getSupplies()) {
+            if (!performedSupplies.contains(s)) {
+                performedSupplies.add(s);
+            }
+        }
+        rs.close();
+        return performedSupplies;
     }
 
 

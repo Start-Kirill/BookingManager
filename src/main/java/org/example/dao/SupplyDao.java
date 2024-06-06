@@ -72,11 +72,11 @@ public class SupplyDao implements ISupplyDao {
     public Optional<Supply> get(UUID uuid) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL, uuid);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetOneByUuidSqlStatement())) {
+             PreparedStatement selectOnePs = c.prepareStatement(createGetOneByUuidSqlStatement())) {
 
-            ps.setObject(1, uuid);
+            selectOnePs.setObject(1, uuid);
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectOnePs.executeQuery();
 
             Supply supply = createSupply(rs);
 
@@ -94,9 +94,9 @@ public class SupplyDao implements ISupplyDao {
     public List<Supply> get() {
 
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetAllSqlStatement())) {
+             PreparedStatement selectAllPs = c.prepareStatement(createGetAllSqlStatement())) {
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectAllPs.executeQuery();
 
             List<Supply> listOfSupplies = createListOfSupplies(rs);
 
@@ -115,13 +115,13 @@ public class SupplyDao implements ISupplyDao {
             return new ArrayList<>();
         }
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
+             PreparedStatement selectInUuidsPs = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
 
             for (int i = 0; i < uuids.size(); i++) {
-                ps.setObject(i + 1, uuids.get(i));
+                selectInUuidsPs.setObject(i + 1, uuids.get(i));
             }
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectInUuidsPs.executeQuery();
 
             List<Supply> listOfSupplies = createListOfSupplies(rs);
 
@@ -137,11 +137,11 @@ public class SupplyDao implements ISupplyDao {
     public Optional<Supply> getWithoutMasters(UUID uuid) {
         NullCheckUtil.checkNull(IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL, uuid);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createGetOneByUuidWithoutMastersSqlStatement())) {
+             PreparedStatement selectOneMastersFreePs = c.prepareStatement(createGetOneByUuidWithoutMastersSqlStatement())) {
 
-            ps.setObject(1, uuid);
+            selectOneMastersFreePs.setObject(1, uuid);
 
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = selectOneMastersFreePs.executeQuery();
             Supply supply = null;
             if (rs.next()) {
                 supply = createSupplyWithoutMasters(rs);
@@ -161,36 +161,15 @@ public class SupplyDao implements ISupplyDao {
     public Supply save(Supply supply) {
         NullCheckUtil.checkNull(IMPOSSIBLE_SAVE_SUPPLY_CAUSE_NULL, supply);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps1 = c.prepareStatement(createInsertSqlStatement());
-             PreparedStatement ps2 = c.prepareStatement(createInsertUserSuppliesSqlStatement())) {
+             PreparedStatement insertSupplyPs = c.prepareStatement(createInsertSqlStatement());
+             PreparedStatement insertSupplyUsersPs = c.prepareStatement(createInsertSupplyUsersSqlStatement())) {
             c.setAutoCommit(false);
 
-            UUID supplyUuid = supply.getUuid();
-            ps1.setObject(1, supplyUuid);
-            ps1.setString(2, supply.getName());
-            ps1.setBigDecimal(3, supply.getPrice());
-            Integer duration = supply.getDuration();
-            if (duration != null) {
-                ps1.setInt(4, supply.getDuration());
-            } else {
-                ps1.setNull(4, Types.NULL);
-            }
-            ps1.setObject(5, supply.getDtCreate());
-            ps1.setObject(6, supply.getDtUpdate());
+            insertSupply(supply, insertSupplyPs);
 
-            ps2.setObject(1, supplyUuid);
-            List<User> masters = supply.getMasters();
-            for (User master : masters) {
-                ps2.setObject(2, master.getUuid());
-                ps2.addBatch();
-            }
+            insertSupplyUsers(supply, insertSupplyUsersPs);
 
-            ps1.execute();
-            ps2.executeBatch();
-
-            for (User master : masters) {
-                UserDaoFactory.getInstance().systemUpdate(master);
-            }
+            updateMaters(supply.getMasters());
 
             c.commit();
 
@@ -206,65 +185,24 @@ public class SupplyDao implements ISupplyDao {
     public Supply update(Supply supply) {
         NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_SUPPLY_CAUSE_NULL, supply);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createUpdateSqlStatement());
-             PreparedStatement ps2 = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
-             PreparedStatement ps3 = c.prepareStatement(createInsertUserSuppliesSqlStatement());
-             PreparedStatement ps4 = c.prepareStatement(createGetUserSuppliesSqlStatement())) {
+             PreparedStatement updateSupplyPs = c.prepareStatement(createUpdateSqlStatement());
+             PreparedStatement deleteSupplyUsersPs = c.prepareStatement(createDeleteSupplyUsersSqlStatement());
+             PreparedStatement insertSupplyUsersPs = c.prepareStatement(createInsertSupplyUsersSqlStatement());
+             PreparedStatement selectSupplyUsersPs = c.prepareStatement(createGetSupplyUsersSqlStatement())) {
 
             c.setAutoCommit(false);
 
-            ps4.setObject(1, supply.getUuid());
-            ResultSet resultSet = ps4.executeQuery();
-            List<User> performedUser = new ArrayList<>();
-            while (resultSet.next()) {
-                UUID uuid = resultSet.getObject(USERS_SUPPLY_USER_COLUMN_NAME, UUID.class);
-                performedUser.add(UserDaoFactory.getInstance().get(uuid).orElseThrow());
-            }
+            List<User> performedMasters = findPerformedMasters(supply, selectSupplyUsersPs);
 
-            Supply updatedSupply = null;
+            deleteSupplyUsers(supply, deleteSupplyUsersPs);
 
-            ps.setString(1, supply.getName());
-            ps.setBigDecimal(2, supply.getPrice());
-            Integer duration = supply.getDuration();
-            if (duration != null) {
-                ps.setInt(3, supply.getDuration());
-            } else {
-                ps.setNull(3, Types.NULL);
-            }
-            ps.setObject(4, supply.getUuid());
-            ps.setObject(5, supply.getDtUpdate());
+            insertSupplyUsers(supply, insertSupplyUsersPs);
 
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                updatedSupply = createSupplyWithoutMasters(rs);
-            }
+            Supply updatedSupply = updateSupply(supply, updateSupplyPs);
 
-            if (updatedSupply == null) {
-                throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SUPPLY_MESSAGE)));
-            }
-            updatedSupply.setMasters(supply.getMasters());
-
-            ps2.setObject(1, supply.getUuid());
-
-            ps3.setObject(1, supply.getUuid());
-            for (User u : supply.getMasters()) {
-                if (!performedUser.contains(u)) {
-                    performedUser.add(u);
-                }
-                ps3.setObject(2, u.getUuid());
-                ps3.addBatch();
-            }
-
-            ps2.execute();
-            ps3.executeBatch();
-
-            for (User user : performedUser) {
-                UserDaoFactory.getInstance().systemUpdate(user);
-            }
-
+            updateMaters(performedMasters);
 
             c.commit();
-            rs.close();
 
             return updatedSupply;
         } catch (SQLException e) {
@@ -276,13 +214,13 @@ public class SupplyDao implements ISupplyDao {
     public void systemUpdate(Supply supply) throws SQLException {
         NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_SUPPLY_CAUSE_NULL, supply);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createSystemUpdateSqlStatement())) {
+             PreparedStatement systemSupplyUpdatePs = c.prepareStatement(createSystemUpdateSqlStatement())) {
             c.setAutoCommit(false);
 
-            ps.setObject(1, supply.getUuid());
-            ps.setObject(2, supply.getDtUpdate());
+            systemSupplyUpdatePs.setObject(1, supply.getUuid());
+            systemSupplyUpdatePs.setObject(2, supply.getDtUpdate());
 
-            if (ps.executeUpdate() < 1) {
+            if (systemSupplyUpdatePs.executeUpdate() < 1) {
                 throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SUPPLY_MESSAGE)));
             }
 
@@ -294,29 +232,120 @@ public class SupplyDao implements ISupplyDao {
     public void delete(Supply supply) {
         NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL, supply);
         try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(createDeleteSqlStatement());
-             PreparedStatement ps2 = c.prepareStatement(createDeleteUserSuppliesSqlStatement())) {
+             PreparedStatement deleteSupplyPs = c.prepareStatement(createDeleteSqlStatement());
+             PreparedStatement deleteSupplyUsersPs = c.prepareStatement(createDeleteSupplyUsersSqlStatement())) {
             c.setAutoCommit(false);
 
-            ps.setObject(1, supply.getUuid());
-            ps.setObject(2, supply.getDtUpdate());
+            deleteSupplyUsers(supply, deleteSupplyUsersPs);
 
-            ps2.setObject(1, supply.getUuid());
+            deleteSupply(supply, deleteSupplyPs);
 
-            int userSupplyExecuteUpdate = ps2.executeUpdate();
-            int supplyExecuteUpdate = ps.executeUpdate();
-            if (userSupplyExecuteUpdate < 1 || supplyExecuteUpdate < 1) {
-                throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SUPPLY_MESSAGE)));
-            }
-
-            for (User user : supply.getMasters()) {
-                UserDaoFactory.getInstance().systemUpdate(user);
-            }
+            updateMaters(supply.getMasters());
 
             c.commit();
         } catch (SQLException e) {
             throw new DeletingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SUPPLY_MESSAGE)));
         }
+    }
+
+    private void deleteSupply(Supply supply, PreparedStatement deleteSupplyPs) throws SQLException {
+        deleteSupplyPs.setObject(1, supply.getUuid());
+        deleteSupplyPs.setObject(2, supply.getDtUpdate());
+
+        int supplyExecuteUpdate = deleteSupplyPs.executeUpdate();
+        if (supplyExecuteUpdate < 1) {
+            throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SUPPLY_MESSAGE)));
+        }
+    }
+
+    private void updateMaters(List<User> masters) throws SQLException {
+        for (User master : masters) {
+            UserDaoFactory.getInstance().systemUpdate(master);
+        }
+    }
+
+    private void insertSupply(Supply supply, PreparedStatement insertSupplyPs) throws SQLException {
+        UUID supplyUuid = supply.getUuid();
+        insertSupplyPs.setObject(1, supplyUuid);
+        insertSupplyPs.setString(2, supply.getName());
+        insertSupplyPs.setBigDecimal(3, supply.getPrice());
+        Integer duration = supply.getDuration();
+        if (duration != null) {
+            insertSupplyPs.setInt(4, supply.getDuration());
+        } else {
+            insertSupplyPs.setNull(4, Types.NULL);
+        }
+        insertSupplyPs.setObject(5, supply.getDtCreate());
+        insertSupplyPs.setObject(6, supply.getDtUpdate());
+
+
+        insertSupplyPs.execute();
+    }
+
+    private void insertSupplyUsers(Supply supply, PreparedStatement insertUserSuppliesPs) throws SQLException {
+        insertUserSuppliesPs.setObject(1, supply.getUuid());
+        List<User> masters = supply.getMasters();
+        for (User master : masters) {
+            insertUserSuppliesPs.setObject(2, master.getUuid());
+            insertUserSuppliesPs.addBatch();
+        }
+        insertUserSuppliesPs.executeBatch();
+    }
+
+    private void deleteSupplyUsers(Supply supply, PreparedStatement deleteUserSuppliesPs) throws SQLException {
+        deleteUserSuppliesPs.setObject(1, supply.getUuid());
+        deleteUserSuppliesPs.execute();
+    }
+
+    private Supply updateSupply(Supply supply, PreparedStatement updateSupplyPs) throws SQLException {
+        Supply updatedSupply = null;
+
+        updateSupplyPs.setString(1, supply.getName());
+        updateSupplyPs.setBigDecimal(2, supply.getPrice());
+        Integer duration = supply.getDuration();
+        if (duration != null) {
+            updateSupplyPs.setInt(3, supply.getDuration());
+        } else {
+            updateSupplyPs.setNull(3, Types.NULL);
+        }
+        updateSupplyPs.setObject(4, supply.getUuid());
+        updateSupplyPs.setObject(5, supply.getDtUpdate());
+
+        ResultSet rs = updateSupplyPs.executeQuery();
+        if (rs.next()) {
+            updatedSupply = createSupplyWithoutMasters(rs);
+        }
+
+        if (updatedSupply == null) {
+            throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SUPPLY_MESSAGE)));
+        }
+
+        updatedSupply.setMasters(supply.getMasters());
+
+        return updatedSupply;
+    }
+
+    private List<User> getSupplyMasters(Supply supply, PreparedStatement selectUserSuppliesPs) throws SQLException {
+        List<User> performedUser = new ArrayList<>();
+
+        selectUserSuppliesPs.setObject(1, supply.getUuid());
+        ResultSet rs = selectUserSuppliesPs.executeQuery();
+        while (rs.next()) {
+            UUID uuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME, UUID.class);
+            performedUser.add(UserDaoFactory.getInstance().get(uuid).orElseThrow());
+        }
+        rs.close();
+        return performedUser;
+    }
+
+    private List<User> findPerformedMasters(Supply supply, PreparedStatement selectUserSuppliesPs) throws SQLException {
+        List<User> performedUser = getSupplyMasters(supply, selectUserSuppliesPs);
+        supply.getMasters().forEach(m -> {
+            if (!performedUser.contains(m)) {
+                performedUser.add(m);
+            }
+        });
+        return performedUser;
     }
 
     private String createInsertSqlStatement() {
@@ -468,7 +497,7 @@ public class SupplyDao implements ISupplyDao {
         return sb.toString();
     }
 
-    private String createInsertUserSuppliesSqlStatement() {
+    private String createInsertSupplyUsersSqlStatement() {
         StringBuilder sb = new StringBuilder("INSERT INTO ");
         sb.append(USERS_SUPPLY_TABLE_NAME);
         sb.append("(");
@@ -479,7 +508,7 @@ public class SupplyDao implements ISupplyDao {
         return sb.toString();
     }
 
-    private String createDeleteUserSuppliesSqlStatement() {
+    private String createDeleteSupplyUsersSqlStatement() {
         StringBuilder sb = new StringBuilder("DELETE FROM ");
         sb.append(USERS_SUPPLY_TABLE_NAME);
         sb.append(" WHERE ");
@@ -488,7 +517,7 @@ public class SupplyDao implements ISupplyDao {
         return sb.toString();
     }
 
-    private String createGetUserSuppliesSqlStatement() {
+    private String createGetSupplyUsersSqlStatement() {
         StringBuilder sb = new StringBuilder("SELECT ");
         sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
         sb.append(" FROM ");
