@@ -576,9 +576,8 @@ public class SupplyDao implements ISupplyDao {
             if (supply == null) {
                 supply = createSupplyWithoutMasters(rs);
             }
-            Object rawMasterUuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME);
-            if (rawMasterUuid != null) {
-                UUID masterUuid = (UUID) rawMasterUuid;
+            UUID masterUuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME, UUID.class);
+            if (masterUuid != null) {
                 masterUuids.add(masterUuid);
             }
         }

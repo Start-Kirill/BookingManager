@@ -208,6 +208,10 @@ public class UserDao implements IUserDao {
 
             updateSupplies(user.getSupplies());
 
+            List<UUID> supplyUuids = user.getSupplies().stream().map(Supply::getUuid).toList();
+            List<Supply> supplies = this.supplyDao.get(supplyUuids);
+            user.setSupplies(supplies);
+
             c.commit();
 
             return user;
@@ -636,20 +640,14 @@ public class UserDao implements IUserDao {
 
     private User createUser(ResultSet rs) throws SQLException {
         User user = null;
-        List<UUID> supplyUuids = new ArrayList<>();
         while (rs.next()) {
             if (user == null) {
                 user = createUserWithoutSupplies(rs);
             }
-            Object rawSupplyUuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
-            if (rawSupplyUuid != null) {
-                UUID supplyUuid = (UUID) rawSupplyUuid;
-                supplyUuids.add(supplyUuid);
-                user.getSupplies().add(this.supplyDao.get(supplyUuid).orElseThrow());
+            UUID supplyUuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME, UUID.class);
+            if (supplyUuid != null) {
+                user.getSupplies().add(this.supplyDao.getWithoutMasters(supplyUuid).orElseThrow());
             }
-        }
-        if (user != null) {
-            user.setSupplies(this.supplyDao.get(supplyUuids));
         }
         return user;
     }
