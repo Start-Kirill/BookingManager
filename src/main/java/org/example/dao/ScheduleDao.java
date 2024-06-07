@@ -191,7 +191,8 @@ public class ScheduleDao implements IScheduleDao {
 
     private void insertSchedule(Schedule schedule, PreparedStatement insertSchedulePs) throws SQLException {
         insertSchedulePs.setObject(1, schedule.getUuid());
-        insertSchedulePs.setObject(2, schedule.getMaster().getUuid());
+        UUID masterUuid = schedule.getMaster() == null ? null : schedule.getMaster().getUuid();
+        insertSchedulePs.setObject(2, masterUuid);
         LocalDateTime dtStart = schedule.getDtStart();
         if (dtStart == null) {
             insertSchedulePs.setNull(3, Types.NULL);
@@ -211,7 +212,8 @@ public class ScheduleDao implements IScheduleDao {
     }
 
     private Schedule updateSchedule(Schedule schedule, PreparedStatement updateSchedulePs) throws SQLException {
-        updateSchedulePs.setObject(1, schedule.getMaster().getUuid());
+        UUID masterUuid = schedule.getMaster() == null ? null : schedule.getMaster().getUuid();
+        updateSchedulePs.setObject(1, masterUuid);
         LocalDateTime dtStart = schedule.getDtStart();
         if (dtStart == null) {
             updateSchedulePs.setNull(2, Types.NULL);
@@ -226,13 +228,16 @@ public class ScheduleDao implements IScheduleDao {
         }
         updateSchedulePs.setObject(4, schedule.getUuid());
         updateSchedulePs.setObject(5, schedule.getDtUpdate());
-        ResultSet rs = updateSchedulePs.executeQuery();
-        Schedule updatedSchedule = null;
-        while (rs.next()) {
-            updatedSchedule = createSchedule(rs);
+        try (ResultSet rs = updateSchedulePs.executeQuery()) {
+            Schedule updatedSchedule = null;
+            while (rs.next()) {
+                updatedSchedule = createSchedule(rs);
+            }
+            if (updatedSchedule == null) {
+                throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SCHEDULE_MESSAGE)));
+            }
+            return updatedSchedule;
         }
-        rs.close();
-        return updatedSchedule;
     }
 
     private String createExistsSqlStatement() {
@@ -323,11 +328,19 @@ public class ScheduleDao implements IScheduleDao {
     }
 
     private Schedule createSchedule(ResultSet rs) throws SQLException {
-        UUID uuid = (UUID) rs.getObject(UUID_COLUMN_NAME);
-        UUID rawMaster = (UUID) rs.getObject(MASTER_COLUMN_NAME);
+        UUID uuid = rs.getObject(UUID_COLUMN_NAME, UUID.class);
+        UUID rawMaster = rs.getObject(MASTER_COLUMN_NAME, UUID.class);
         User master = this.userDao.get(rawMaster).orElseThrow();
-        LocalDateTime dtStart = rs.getTimestamp(DT_START_COLUMN_NAME).toLocalDateTime();
-        LocalDateTime dtEnd = rs.getTimestamp(DT_END_COLUMN_NAME).toLocalDateTime();
+        LocalDateTime dtStart = null;
+        Timestamp dtStartTimestamp = rs.getTimestamp(DT_START_COLUMN_NAME);
+        if (dtStartTimestamp != null) {
+            dtStart = dtStartTimestamp.toLocalDateTime();
+        }
+        LocalDateTime dtEnd = null;
+        Timestamp dtEndTimestamp = rs.getTimestamp(DT_END_COLUMN_NAME);
+        if (dtEndTimestamp != null) {
+            dtEnd = dtEndTimestamp.toLocalDateTime();
+        }
         LocalDateTime dtCreate = rs.getTimestamp(DT_CREATE_COLUMN_NAME).toLocalDateTime();
         LocalDateTime dtUpdate = rs.getTimestamp(DT_UPDATE_COLUMN_NAME).toLocalDateTime();
 
