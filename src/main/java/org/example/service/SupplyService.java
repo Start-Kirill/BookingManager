@@ -9,6 +9,7 @@ import org.example.core.mappers.SupplyMapper;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.ISupplyDao;
 import org.example.service.api.ISupplyService;
+import org.example.service.api.IUserService;
 import org.example.service.exceptions.InvalidSupplyBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
 import org.example.service.exceptions.SuchElementNotExistsException;
@@ -55,9 +56,18 @@ public class SupplyService implements ISupplyService {
 
     private final ISupplyDao supplyDao;
 
+    private IUserService userService;
 
     public SupplyService(ISupplyDao supplyDao) {
         this.supplyDao = supplyDao;
+    }
+
+    public IUserService getUserService() {
+        return userService == null ? UserServiceFactory.getInstance() : userService;
+    }
+
+    public void setUserService(IUserService userService) {
+        this.userService = userService;
     }
 
 
@@ -101,7 +111,7 @@ public class SupplyService implements ISupplyService {
         List<UUID> mastersUuid = supplyCreateDto.getMasters();
         List<User> masters = new ArrayList<>();
         if (mastersUuid != null) {
-            masters = UserServiceFactory.getInstance().get(mastersUuid);
+            masters = this.getUserService().get(mastersUuid);
         }
         supply.setMasters(masters);
 
@@ -128,7 +138,7 @@ public class SupplyService implements ISupplyService {
         List<UUID> mastersUuid = supplyCreateDto.getMasters();
         List<User> masters = new ArrayList<>();
         if (mastersUuid != null) {
-            masters = UserServiceFactory.getInstance().get(mastersUuid);
+            masters = this.getUserService().get(mastersUuid);
         }
         actualSupply.setMasters(masters);
 

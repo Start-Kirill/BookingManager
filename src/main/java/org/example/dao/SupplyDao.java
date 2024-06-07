@@ -7,6 +7,7 @@ import org.example.core.enums.ErrorType;
 import org.example.core.util.NullCheckUtil;
 import org.example.dao.api.IDataBaseConnection;
 import org.example.dao.api.ISupplyDao;
+import org.example.dao.api.IUserDao;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
@@ -66,9 +67,18 @@ public class SupplyDao implements ISupplyDao {
 
     private final IDataBaseConnection dataBaseConnection;
 
+    private IUserDao userDao;
 
     public SupplyDao(IDataBaseConnection dataBaseConnection) {
         this.dataBaseConnection = dataBaseConnection;
+    }
+
+    public IUserDao getUserDao() {
+        return userDao == null ? UserDaoFactory.getInstance() : userDao;
+    }
+
+    public void setUserDao(IUserDao userDao) {
+        this.userDao = userDao;
     }
 
 
@@ -281,7 +291,7 @@ public class SupplyDao implements ISupplyDao {
 
     private void updateMaters(List<User> masters) throws SQLException {
         for (User master : masters) {
-            UserDaoFactory.getInstance().systemUpdate(master);
+            this.getUserDao().systemUpdate(master);
         }
     }
 
@@ -353,7 +363,7 @@ public class SupplyDao implements ISupplyDao {
         ResultSet rs = selectUserSuppliesPs.executeQuery();
         while (rs.next()) {
             UUID uuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME, UUID.class);
-            performedUser.add(UserDaoFactory.getInstance().get(uuid).orElseThrow());
+            performedUser.add(this.getUserDao().get(uuid).orElseThrow());
         }
         rs.close();
         return performedUser;
@@ -582,7 +592,7 @@ public class SupplyDao implements ISupplyDao {
             }
         }
         if (supply != null) {
-            supply.setMasters(UserDaoFactory.getInstance().getWithoutSupplies(masterUuids));
+            supply.setMasters(this.getUserDao().getWithoutSupplies(masterUuids));
         }
         return supply;
     }
@@ -597,7 +607,7 @@ public class SupplyDao implements ISupplyDao {
             Object rawUuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME);
             if (rawUuid != null) {
                 UUID masterUuid = (UUID) rawUuid;
-                supply.getMasters().add(UserDaoFactory.getInstance().getWithoutSupplies(masterUuid).orElseThrow());
+                supply.getMasters().add(this.getUserDao().getWithoutSupplies(masterUuid).orElseThrow());
             }
 
             uuidSupplyMap.put(uuid, supply);
