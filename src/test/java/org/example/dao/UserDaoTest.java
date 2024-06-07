@@ -106,6 +106,17 @@ class UserDaoTest {
     }
 
     @Test
+    void shouldGetByUuidWithoutSuppliesProperly() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        User saved = this.userDao.save(user);
+
+        User actualUser = this.userDao.getWithoutSupplies(user.getUuid()).orElseThrow();
+        Assertions.assertEquals(saved, actualUser);
+    }
+
+    @Test
     void shouldThrowWhileGetByWrongUuid() {
         supplyDao.save(supplyOne);
         supplyDao.save(supplyTwo);
@@ -126,6 +137,30 @@ class UserDaoTest {
 
         UUID nullUuid = null;
         assertThrows(NullArgumentException.class, () -> this.userDao.get(nullUuid));
+    }
+
+    @Test
+    void shouldGetByListUuidsProperly() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        this.userDao.save(user);
+
+        List<UUID> uuids = List.of(user.getUuid());
+        List<User> users = this.userDao.get(uuids);
+        assertEquals(1, users.size());
+    }
+
+    @Test
+    void shouldGetByListUuidsWithoutSuppliesProperly() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        this.userDao.save(user);
+
+        List<UUID> uuids = List.of(user.getUuid());
+        List<User> users = this.userDao.getWithoutSupplies(uuids);
+        assertEquals(1, users.size());
     }
 
     @Test
@@ -259,6 +294,34 @@ class UserDaoTest {
         assertEquals(newSupplies, updated.getSupplies());
         assertEquals(user.getDtUpdate().truncatedTo(ChronoUnit.MILLIS), updated.getDtCreate().truncatedTo(ChronoUnit.MILLIS));
         assertNotEquals(user.getDtCreate().truncatedTo(ChronoUnit.MILLIS), updated.getDtUpdate().truncatedTo(ChronoUnit.MILLIS));
+    }
+
+    @Test
+    void shouldSystemUpdate() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        this.userDao.save(user);
+
+        assertDoesNotThrow(() -> this.userDao.systemUpdate(user));
+    }
+
+    @Test
+    void shouldExists() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        this.userDao.save(user);
+        assertTrue(this.userDao.exists(user.getUuid()));
+    }
+
+    @Test
+    void shouldNotExists() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        this.userDao.save(user);
+        assertFalse(this.userDao.exists(UUID.randomUUID()));
     }
 
 

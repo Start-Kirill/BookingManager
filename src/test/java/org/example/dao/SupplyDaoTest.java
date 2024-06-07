@@ -86,6 +86,28 @@ class SupplyDaoTest {
     }
 
     @Test
+    void shouldGetByListUuidProperly() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        List<UUID> supplyUuids = List.of(supplyOne.getUuid(), supplyTwo.getUuid());
+
+        List<Supply> supplies = this.supplyDao.get(supplyUuids);
+        assertEquals(2, supplies.size());
+    }
+
+    @Test
+    void shouldGetByEmptyListUuidProperly() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        List<UUID> supplyUuids = new ArrayList<>();
+
+        List<Supply> supplies = this.supplyDao.get(supplyUuids);
+        assertEquals(0, supplies.size());
+    }
+
+    @Test
     void shouldGetByUuidProperly() {
         supplyDao.save(supplyOne);
         supplyDao.save(supplyTwo);
@@ -99,6 +121,24 @@ class SupplyDaoTest {
     void shouldThrowWhileGetByWrongUuid() {
         supplyDao.save(supplyOne);
         Optional<Supply> supplyOptional = this.supplyDao.get(UUID.randomUUID());
+
+        assertThrows(NoSuchElementException.class, supplyOptional::orElseThrow);
+    }
+
+    @Test
+    void shouldGetByUuidWithoutMasterProperly() {
+        supplyDao.save(supplyOne);
+        supplyDao.save(supplyTwo);
+
+        Supply supply = this.supplyDao.getWithoutMasters(supplyOne.getUuid()).orElseThrow();
+
+        assertEquals(supplyOne, supply);
+    }
+
+    @Test
+    void shouldThrowWhileGetByWrongUuidWithoutMaster() {
+        supplyDao.save(supplyOne);
+        Optional<Supply> supplyOptional = this.supplyDao.getWithoutMasters(UUID.randomUUID());
 
         assertThrows(NoSuchElementException.class, supplyOptional::orElseThrow);
     }
@@ -160,6 +200,30 @@ class SupplyDaoTest {
         this.supplyDao.save(supplyOne);
         supplyTwo.setName(supplyOne.getName());
         assertThrows(CreatingDBDataException.class, () -> supplyDao.save(supplyTwo));
+    }
+
+    @Test
+    void shouldSystemUpdateProperly() {
+        this.supplyDao.save(supplyOne);
+        assertDoesNotThrow(() -> this.supplyDao.systemUpdate(supplyOne));
+    }
+
+    @Test
+    void shouldThrowWhileSystemUpdateNotExistedSupply() {
+        this.supplyDao.save(supplyOne);
+        assertThrows(UpdatingDBDataException.class, () -> this.supplyDao.systemUpdate(supplyTwo));
+    }
+
+    @Test
+    void shouldExists() {
+        this.supplyDao.save(supplyOne);
+        assertTrue(this.supplyDao.exists(supplyOne.getUuid()));
+    }
+
+    @Test
+    void shouldNotExists() {
+        this.supplyDao.save(supplyOne);
+        assertFalse(this.supplyDao.exists(supplyTwo.getUuid()));
     }
 
     @Test
@@ -284,13 +348,8 @@ class SupplyDaoTest {
     void shouldThrowWhileDeleteNotUpToDatedObject() {
         this.supplyDao.save(supplyOne);
 
-        String newName = "staining";
-        BigDecimal newPrice = BigDecimal.valueOf(100.70);
-        Integer newDuration = 120;
-        supplyOne.setName(newName);
-        supplyOne.setPrice(newPrice);
-        supplyOne.setDuration(newDuration);
         supplyOne.setDtUpdate(LocalDateTime.now());
+
         assertThrows(DeletingDBDataException.class, () -> this.supplyDao.delete(supplyOne));
     }
 
