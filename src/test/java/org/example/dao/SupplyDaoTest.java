@@ -3,8 +3,9 @@ package org.example.dao;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.example.core.entity.Supply;
+import org.example.core.entity.User;
+import org.example.core.enums.UserRole;
 import org.example.core.exceptions.NullArgumentException;
-import org.example.dao.api.ISupplyDao;
 import org.example.dao.ds.DataBaseConnection;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
@@ -34,7 +35,11 @@ class SupplyDaoTest {
     Supply supplyOne;
     Supply supplyTwo;
 
-    ISupplyDao supplyDao;
+    User master;
+
+    SupplyDao supplyDao;
+
+    UserDao userDao;
 
     @BeforeAll
     static void beforeAll() {
@@ -55,21 +60,29 @@ class SupplyDaoTest {
         config.setPassword(postgres.getPassword());
         config.setMaximumPoolSize(2);
         DataBaseConnection dataBaseConnection = new DataBaseConnection(new HikariDataSource(config));
+
         supplyDao = new SupplyDao(dataBaseConnection);
+        userDao = new UserDao(supplyDao, dataBaseConnection);
+        supplyDao.setUserDao(userDao);
         try (Connection connection = dataBaseConnection.getConnection();
              Statement statement = connection.createStatement()) {
             statement.execute("TRUNCATE TABLE app.supply RESTART IDENTITY CASCADE");
         } catch (Exception e) {
             throw new RuntimeException("Ошибка очищения базы данных", e);
         }
-        supplyOne = new Supply(UUID.randomUUID(), "cut", new BigDecimal("50.50"), 100, new ArrayList<>(), LocalDateTime.now(), LocalDateTime.now());
-        supplyTwo = new Supply(UUID.randomUUID(), "non-cut", new BigDecimal("150.50"), 150, new ArrayList<>(), LocalDateTime.now(), LocalDateTime.now());
+
+        master = new User(UUID.randomUUID(), "Kirill", "+123456789", UserRole.MASTER, new ArrayList<>(), LocalDateTime.now(), LocalDateTime.now());
+        userDao.save(master);
+        supplyOne = new Supply(UUID.randomUUID(), "cut", new BigDecimal("50.50"), 100, List.of(master), LocalDateTime.now(), LocalDateTime.now());
+        supplyTwo = new Supply(UUID.randomUUID(), "non-cut", new BigDecimal("150.50"), 150, List.of(master), LocalDateTime.now(), LocalDateTime.now());
     }
 
 
     @Test
     void shouldGetProperly() {
         supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyTwo.setMasters(List.of(updatedMaster));
         supplyDao.save(supplyTwo);
 
         List<Supply> supplies = this.supplyDao.get();
@@ -88,6 +101,8 @@ class SupplyDaoTest {
     @Test
     void shouldGetByListUuidProperly() {
         supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyTwo.setMasters(List.of(updatedMaster));
         supplyDao.save(supplyTwo);
 
         List<UUID> supplyUuids = List.of(supplyOne.getUuid(), supplyTwo.getUuid());
@@ -99,6 +114,8 @@ class SupplyDaoTest {
     @Test
     void shouldGetByEmptyListUuidProperly() {
         supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyTwo.setMasters(List.of(updatedMaster));
         supplyDao.save(supplyTwo);
 
         List<UUID> supplyUuids = new ArrayList<>();
@@ -110,6 +127,8 @@ class SupplyDaoTest {
     @Test
     void shouldGetByUuidProperly() {
         supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyTwo.setMasters(List.of(updatedMaster));
         supplyDao.save(supplyTwo);
 
         Supply supply = this.supplyDao.get(supplyOne.getUuid()).orElseThrow();
@@ -128,6 +147,8 @@ class SupplyDaoTest {
     @Test
     void shouldGetByUuidWithoutMasterProperly() {
         supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyTwo.setMasters(List.of(updatedMaster));
         supplyDao.save(supplyTwo);
 
         Supply supply = this.supplyDao.getWithoutMasters(supplyOne.getUuid()).orElseThrow();
@@ -154,6 +175,8 @@ class SupplyDaoTest {
     @Test
     void shouldSaveProperly() {
         Supply savedOne = supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyTwo.setMasters(List.of(updatedMaster));
         Supply savedTwo = supplyDao.save(supplyTwo);
 
         assertEquals(supplyOne, savedOne);
@@ -229,6 +252,8 @@ class SupplyDaoTest {
     @Test
     void shouldUpdateProperly() {
         this.supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyOne.setMasters(List.of(updatedMaster));
 
         String newName = "staining";
         BigDecimal newPrice = BigDecimal.valueOf(100.70);
@@ -247,7 +272,9 @@ class SupplyDaoTest {
 
     @Test
     void shouldUpdateNullDurationProperly() {
-        this.supplyDao.save(supplyOne);
+        supplyOne = this.supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyOne.setMasters(List.of(updatedMaster));
 
         String newName = "staining";
         BigDecimal newPrice = BigDecimal.valueOf(100.70);
@@ -327,7 +354,9 @@ class SupplyDaoTest {
 
     @Test
     void shouldDeleteProperly() {
-        this.supplyDao.save(supplyOne);
+        supplyOne = this.supplyDao.save(supplyOne);
+        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
+        supplyOne.setMasters(List.of(updatedMaster));
 
         this.supplyDao.delete(supplyOne);
 

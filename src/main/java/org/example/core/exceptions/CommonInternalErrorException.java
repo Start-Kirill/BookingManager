@@ -13,25 +13,13 @@ public class CommonInternalErrorException extends RuntimeException {
         this.errors = errors;
     }
 
-    public CommonInternalErrorException(String message, List<ErrorResponse> errors) {
-        super(message);
-        this.errors = errors;
-    }
 
-    public CommonInternalErrorException(String message, Throwable cause, List<ErrorResponse> errors) {
-        super(message, cause);
-        this.errors = errors;
-    }
 
     public CommonInternalErrorException(Throwable cause, List<ErrorResponse> errors) {
         super(cause);
         this.errors = errors;
     }
 
-    public CommonInternalErrorException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, List<ErrorResponse> errors) {
-        super(message, cause, enableSuppression, writableStackTrace);
-        this.errors = errors;
-    }
 
     public List<ErrorResponse> getErrors() {
         return errors;

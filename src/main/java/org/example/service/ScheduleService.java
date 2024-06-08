@@ -26,7 +26,7 @@ public class ScheduleService implements IScheduleService {
 
     private static final String DT_END_FIELD_NAME = "dt_end";
 
-    private static final String MASTER_FIELD_NAME = "dt_end";
+    private static final String MASTER_FIELD_NAME = "master";
 
     private static final String MASTER_CAN_NOT_BE_NULL_MESSAGE = "Поле Master должно быть заполнено";
 

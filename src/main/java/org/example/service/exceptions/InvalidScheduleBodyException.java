@@ -9,19 +9,4 @@ public class InvalidScheduleBodyException extends StructuredErrorException {
         super(errors);
     }
 
-    public InvalidScheduleBodyException(String message, Map<String, String> errors) {
-        super(message, errors);
-    }
-
-    public InvalidScheduleBodyException(String message, Throwable cause, Map<String, String> errors) {
-        super(message, cause, errors);
-    }
-
-    public InvalidScheduleBodyException(Throwable cause, Map<String, String> errors) {
-        super(cause, errors);
-    }
-
-    public InvalidScheduleBodyException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, Map<String, String> errors) {
-        super(message, cause, enableSuppression, writableStackTrace, errors);
-    }
 }

@@ -80,7 +80,6 @@ public class GlobalExceptionHandler implements Filter {
 
     private void handleUnknownError(HttpServletResponse response, Exception ex) throws IOException {
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        ex.printStackTrace();
         response.getWriter().write(ex.getMessage());
     }
 

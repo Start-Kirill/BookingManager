@@ -10,19 +10,4 @@ public class SuchElementNotExistsException extends CommonErrorException {
         super(errors);
     }
 
-    public SuchElementNotExistsException(String message, List<ErrorResponse> errors) {
-        super(message, errors);
-    }
-
-    public SuchElementNotExistsException(String message, Throwable cause, List<ErrorResponse> errors) {
-        super(message, cause, errors);
-    }
-
-    public SuchElementNotExistsException(Throwable cause, List<ErrorResponse> errors) {
-        super(cause, errors);
-    }
-
-    public SuchElementNotExistsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, List<ErrorResponse> errors) {
-        super(message, cause, enableSuppression, writableStackTrace, errors);
-    }
 }

@@ -363,7 +363,7 @@ public class SupplyDao implements ISupplyDao {
         ResultSet rs = selectUserSuppliesPs.executeQuery();
         while (rs.next()) {
             UUID uuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME, UUID.class);
-            performedUser.add(this.getUserDao().get(uuid).orElseThrow());
+            performedUser.add(this.getUserDao().getWithoutSupplies(uuid).orElseThrow());
         }
         rs.close();
         return performedUser;
