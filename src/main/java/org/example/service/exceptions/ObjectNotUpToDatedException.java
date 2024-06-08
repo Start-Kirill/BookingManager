@@ -1,22 +1,13 @@
 package org.example.service.exceptions;
 
-public class ObjectNotUpToDatedException extends RuntimeException {
-    public ObjectNotUpToDatedException() {
+import org.example.core.dto.errors.ErrorResponse;
+import org.example.core.exceptions.CommonErrorException;
+
+import java.util.List;
+
+public class ObjectNotUpToDatedException extends CommonErrorException {
+    public ObjectNotUpToDatedException(List<ErrorResponse> errors) {
+        super(errors);
     }
 
-    public ObjectNotUpToDatedException(String message) {
-        super(message);
-    }
-
-    public ObjectNotUpToDatedException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ObjectNotUpToDatedException(Throwable cause) {
-        super(cause);
-    }
-
-    public ObjectNotUpToDatedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

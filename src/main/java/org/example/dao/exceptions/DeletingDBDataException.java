@@ -1,23 +1,19 @@
 package org.example.dao.exceptions;
 
-public class DeletingDBDataException extends RuntimeException {
+import org.example.core.dto.errors.ErrorResponse;
+import org.example.core.exceptions.CommonInternalErrorException;
 
-    public DeletingDBDataException() {
+import java.util.List;
+
+public class DeletingDBDataException extends CommonInternalErrorException {
+
+    public DeletingDBDataException(List<ErrorResponse> errors) {
+        super(errors);
     }
 
-    public DeletingDBDataException(String message) {
-        super(message);
+
+    public DeletingDBDataException(Throwable cause, List<ErrorResponse> errors) {
+        super(cause, errors);
     }
 
-    public DeletingDBDataException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public DeletingDBDataException(Throwable cause) {
-        super(cause);
-    }
-
-    public DeletingDBDataException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

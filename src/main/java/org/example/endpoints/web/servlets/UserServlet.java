@@ -59,7 +59,7 @@ public class UserServlet extends HttpServlet {
         ServletInputStream inputStream = req.getInputStream();
         UserCreateDto userCreateDto = this.objectMapper.readValue(inputStream, UserCreateDto.class);
         User user = this.userService.save(userCreateDto);
-        resp.setStatus(201);
+        resp.setStatus(HttpServletResponse.SC_CREATED);
         resp.getWriter().write(this.objectMapper.writeValueAsString(UserMapper.INSTANCE.userToUserDto(user)));
     }
 
@@ -67,9 +67,6 @@ public class UserServlet extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
-        if (uuid == null || dtUpdate == null) {
-            throw new IllegalArgumentException(COORDINATES_ABSENT_OR_WRONG_MESSAGE);
-        }
         ServletInputStream inputStream = req.getInputStream();
         UserCreateDto userCreateDto = this.objectMapper.readValue(inputStream, UserCreateDto.class);
         User user = this.userService.update(userCreateDto, uuid, dtUpdate);
@@ -80,9 +77,6 @@ public class UserServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);
         LocalDateTime dtUpdate = PathVariablesSearcherUtil.retrieveDtUpdateAsPathVariables(req, URL_PART_BEFORE_DT_UPDATE_NAME);
-        if (uuid == null || dtUpdate == null) {
-            throw new IllegalArgumentException(COORDINATES_ABSENT_OR_WRONG_MESSAGE);
-        }
         this.userService.delete(uuid, dtUpdate);
     }
 }

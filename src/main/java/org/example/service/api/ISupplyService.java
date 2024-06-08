@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface ISupplyService extends ICRUDService<Supply, SupplyCreateDto> {
 
     List<Supply> get(List<UUID> uuids);
+
+    boolean exists(UUID uuid);
 }

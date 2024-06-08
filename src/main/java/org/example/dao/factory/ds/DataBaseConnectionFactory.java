@@ -2,10 +2,8 @@ package org.example.dao.factory.ds;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-
+import org.example.dao.api.IDataBaseConnection;
+import org.example.dao.ds.DataBaseConnection;
 
 public class DataBaseConnectionFactory {
 
@@ -17,10 +15,19 @@ public class DataBaseConnectionFactory {
         ds = new HikariDataSource(config);
     }
 
+    private static volatile IDataBaseConnection instance;
+
     private DataBaseConnectionFactory() {
     }
 
-    public static Connection getConnection() throws SQLException {
-        return ds.getConnection();
+    public static IDataBaseConnection getInstance() {
+        if (instance == null) {
+            synchronized (DataBaseConnectionFactory.class) {
+                if (instance == null) {
+                    instance = new DataBaseConnection(ds);
+                }
+            }
+        }
+        return instance;
     }
 }

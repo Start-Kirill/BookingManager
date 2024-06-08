@@ -1,23 +1,18 @@
 package org.example.dao.exceptions;
 
-public class UpdatingDBDataException extends RuntimeException {
+import org.example.core.dto.errors.ErrorResponse;
+import org.example.core.exceptions.CommonInternalErrorException;
 
-    public UpdatingDBDataException() {
+import java.util.List;
+
+public class UpdatingDBDataException extends CommonInternalErrorException {
+
+    public UpdatingDBDataException(List<ErrorResponse> errors) {
+        super(errors);
     }
 
-    public UpdatingDBDataException(String message) {
-        super(message);
+    public UpdatingDBDataException(Throwable cause, List<ErrorResponse> errors) {
+        super(cause, errors);
     }
 
-    public UpdatingDBDataException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public UpdatingDBDataException(Throwable cause) {
-        super(cause);
-    }
-
-    public UpdatingDBDataException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

@@ -2,6 +2,7 @@ package org.example.dao.factory;
 
 import org.example.dao.ScheduleDao;
 import org.example.dao.api.IScheduleDao;
+import org.example.dao.factory.ds.DataBaseConnectionFactory;
 
 public class ScheduleDaoFactory {
 
@@ -14,7 +15,8 @@ public class ScheduleDaoFactory {
         if (instance == null) {
             synchronized (ScheduleDaoFactory.class) {
                 if (instance == null) {
-                    instance = new ScheduleDao(UserDaoFactory.getInstance());
+                    instance = new ScheduleDao(UserDaoFactory.getInstance(),
+                            DataBaseConnectionFactory.getInstance());
                 }
             }
         }

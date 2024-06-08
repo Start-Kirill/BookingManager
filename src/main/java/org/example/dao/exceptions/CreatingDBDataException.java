@@ -1,23 +1,15 @@
 package org.example.dao.exceptions;
 
-public class CreatingDBDataException extends RuntimeException {
+import org.example.core.dto.errors.ErrorResponse;
+import org.example.core.exceptions.CommonInternalErrorException;
 
-    public CreatingDBDataException() {
+import java.util.List;
+
+public class CreatingDBDataException extends CommonInternalErrorException {
+
+
+    public CreatingDBDataException(Throwable cause, List<ErrorResponse> errors) {
+        super(cause, errors);
     }
 
-    public CreatingDBDataException(String message) {
-        super(message);
-    }
-
-    public CreatingDBDataException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public CreatingDBDataException(Throwable cause) {
-        super(cause);
-    }
-
-    public CreatingDBDataException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

@@ -1,6 +1,7 @@
 package org.example.core.entity;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -83,7 +84,16 @@ public class Schedule {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Schedule schedule = (Schedule) o;
-        return Objects.equals(uuid, schedule.uuid) && Objects.equals(master, schedule.master) && Objects.equals(dtStart, schedule.dtStart) && Objects.equals(dtEnd, schedule.dtEnd) && Objects.equals(dtCreate, schedule.dtCreate) && Objects.equals(dtUpdate, schedule.dtUpdate);
+        dtStart = dtStart == null ? null : dtStart.truncatedTo(ChronoUnit.MILLIS);
+        dtEnd = dtEnd == null ? null : dtEnd.truncatedTo(ChronoUnit.MILLIS);
+        LocalDateTime dtStartTarget = schedule.getDtStart() == null ? null : schedule.getDtStart().truncatedTo(ChronoUnit.MILLIS);
+        LocalDateTime dtEndTarget = schedule.getDtEnd() == null ? null : schedule.getDtEnd().truncatedTo(ChronoUnit.MILLIS);
+        return Objects.equals(uuid, schedule.uuid)
+                && Objects.equals(master, schedule.master)
+                && Objects.equals(dtStart, dtStartTarget)
+                && Objects.equals(dtEnd, dtEndTarget)
+                && Objects.equals(dtCreate.truncatedTo(ChronoUnit.MILLIS), schedule.dtCreate.truncatedTo(ChronoUnit.MILLIS))
+                && Objects.equals(dtUpdate.truncatedTo(ChronoUnit.MILLIS), schedule.dtUpdate.truncatedTo(ChronoUnit.MILLIS));
     }
 
     @Override
