@@ -1,0 +1,634 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Booking Manager
+  contact:
+    name: Kiryl Staravoitau
+    url: http://www.linkedin.com/in/kiryl-staravoitau-0aab54289
+
+servers:
+  - url: http://{host}:{port}
+    description: custom server
+    variables:
+      host:
+        description: host name
+        default: localhost
+      port:
+        description: port value
+        default: "80"
+
+tags:
+  - name: "Schedule"
+    description: "Взаимодействие с графиком"
+  - name: "Supply"
+    description: "Взаимодействие с услугами"
+  - name: "User"
+    description: "Взаимодействие с пользователями"
+
+paths:
+  /schedule:
+    get:
+      tags:
+        - "Schedule"
+      summary: "Получить весь график"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+    post:
+      tags:
+        - "Schedule"
+      summary: "Создать график"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreateDto'
+      responses:
+        '201':
+          description: "Schedule created"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleDto'
+        '400':
+          $ref: '#/components/responses/Bad_Request'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+  /schedule/{uuid}:
+    get:
+      tags:
+        - "Schedule"
+      summary: "Получить график по uuid"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор графика"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+  /schedule/{uuid}/dt_update/{dt_update}:
+    put:
+      tags:
+        - "Schedule"
+      summary: "Обновить график"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор графика"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: dt_update
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: "Дата последнего обновления записи"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+    delete:
+      tags:
+        - "Schedule"
+      summary: "Удалить график"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор графика"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: dt_update
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: "Дата последнего обновления записи"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  /supply:
+    get:
+      tags:
+        - "Supply"
+      summary: "Получить список услуг"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplyDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+    post:
+      tags:
+        - "Supply"
+      summary: "Создать услугу"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplyCreateDto'
+      responses:
+        '201':
+          description: "Supply created"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplyDto'
+        '400':
+          $ref: '#/components/responses/Bad_Request'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+  /supply/{uuid}:
+    get:
+      tags:
+        - "Supply"
+      summary: "Получить услугу по uuid"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор услуги"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplyDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+  /supply/{uuid}/dt_update/{dt_update}:
+    put:
+      tags:
+        - "Supply"
+      summary: "Обновить услугу"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор услуги"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: dt_update
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: "Дата последнего обновления записи"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplyDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+    delete:
+      tags:
+        - "Supply"
+      summary: "Удалить услугу"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор услуги"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: dt_update
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: "Дата последнего обновления записи"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplyDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+  /user:
+    get:
+      tags:
+        - "User"
+      summary: "Полусить список пользователей"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+    post:
+      tags:
+        - "User"
+      summary: "Создать нового пользователя"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateDto'
+      responses:
+        '201':
+          description: "User created"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '400':
+          $ref: '#/components/responses/Bad_Request'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+  /user/{uuid}:
+    get:
+      tags:
+        - "User"
+      summary: "Получить пользователся по uuid"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор пользователя"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+  /user/{uuid}/dt_update/{dt_update}:
+    put:
+      tags:
+        - "User"
+      summary: "Обновить пользователя"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор пользователя"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: dt_update
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: "Дата последнего обновления записи"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+    delete:
+      tags:
+        - "User"
+      summary: "Удалить пользователя"
+      parameters:
+        - in: path
+          name: uuid
+          description: "Идентификатор пользователя"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: dt_update
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: "Дата последнего обновления записи"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDto'
+        '500':
+          $ref: '#/components/responses/Internal_Server_Error'
+
+components:
+  schemas:
+    UserRef:
+      type: object
+      description: Ссылка на пользователя
+      allOf:
+        - $ref: '#/components/schemas/t_ref'
+    SupplyRef:
+      type: object
+      description: Ссылка на улугу
+      allOf:
+        - $ref: '#/components/schemas/t_ref'
+    UserRole:
+      type: string
+      description: |
+        Роль пользователя:
+          * `USER`
+          * `MASTER`
+          * `ADMIN`
+      enum:
+        - "ACTIVE"
+        - "MASTER"
+        - "ADMIN"
+    ScheduleDto:
+      type: object
+      description: График
+      allOf:
+        - $ref: '#/components/schemas/t_base_essence'
+      properties:
+        master:
+          description: Уникальный идентификатор мастера
+          type: string
+          format: uuid
+        dt_start:
+          description: дата и время начала
+          type: number
+          format: int64
+        dt_end:
+          description: дата и время окончания
+          type: number
+          format: int64
+    ScheduleCreateDto:
+      type: object
+      properties:
+        master:
+          description: Уникальный идентификатор мастера
+          type: string
+          format: uuid
+        dt_start:
+          description: дата и время начала
+          type: number
+          format: int64
+        dt_end:
+          description: дата и время окончания
+          type: number
+          format: int64
+    SupplyDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/t_base_essence'
+      properties:
+        name:
+          description: Название услуги
+          type: string
+        price:
+          description: Цена
+          type: string
+        duration:
+          description: Длительность
+          type: number
+        masters:
+          description: массив uuid мастеров
+          type: array
+          items:
+            $ref: '#/components/schemas/t_ref'
+    SupplyCreateDto:
+      type: object
+      properties:
+        name:
+          description: Название услуги
+          type: string
+        price:
+          description: Цена
+          type: string
+        duration:
+          description: Длительность
+          type: number
+        masters:
+          description: массив uuid мастеров
+          type: array
+          items:
+            $ref: '#/components/schemas/t_ref'
+    UserDto:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/t_base_essence'
+      properties:
+        name:
+          description: Название услуги
+          type: string
+        phone_number:
+          description: Номер телефона
+          type: string
+        user_role:
+          $ref: '#/components/schemas/UserRole'
+        supplies:
+          description: массив uuid услуг
+          type: array
+          items:
+            $ref: '#/components/schemas/t_ref'
+    UserCreateDto:
+      type: object
+      properties:
+        name:
+          description: Название услуги
+          type: string
+        phone_number:
+          description: Номер телефона
+          type: string
+        user_role:
+          $ref: '#/components/schemas/UserRole'
+        supplies:
+          description: массив uuid услуг
+          type: array
+          items:
+            $ref: '#/components/schemas/t_ref'
+    t_ref:
+      type: object
+      description: Описание базовой сущности.
+      required:
+        - uuid
+      properties:
+        uuid:
+          description: Уникальный идентификатор сущности
+          type: string
+          format: uuid
+    t_base_essence:
+      type: object
+      description: Описание базовой сущности.
+      required:
+        - uuid
+        - dt_create
+        - dt_update
+      properties:
+        uuid:
+          description: Уникальный идентификатор сущности
+          type: string
+          format: uuid
+          readOnly: true
+        dt_create:
+          description: Дата создания сущности (linux time)
+          type: number
+          format: int64
+          readOnly: true
+        dt_update:
+          description: Дата последнего обновления сущности (linux time)
+          type: integer
+          format: int64
+          readOnly: true
+    t_error_response:
+      type: object
+      description: Ошибка. Содержит общее описание ошибки
+      required:
+        - logref
+        - message
+      properties:
+        logref:
+          type: string
+          description: |
+            Тип ошибки (предназначено для машинной обработки):
+              * `error` - Признак что ошибка не привязана к полю
+          enum:
+            - "error"
+        message:
+          description: Сообщение об ошибке
+          type: string
+          example: Запрос содержит некорректные данные. Измените запрос и отправьте его ещё ра
+    t_structured_error_response:
+      type: object
+      description: Ошибка. Содержит описание ошибок с отсылками на поля сущности
+      required:
+        - logref
+        - errors
+      properties:
+        logref:
+          type: string
+          description: |
+            Тип ошибки (предназначено для машинной обработки):
+              * `structured_error` - Признак что ошибка привязана к полю
+          enum:
+            - "structured_error"
+        errors:
+          description: Список ошибок
+          type: array
+          items:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Сообщение об ошибке
+                example: Должно быть положительным числом
+              field:
+                type: string
+                description: Наименование поля с которым связано сообщение
+                example: time_uni
+  responses:
+    Bad_Request:
+      description: The request is invalid. The server cannot process the request
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - type: array
+                items:
+                  $ref: '#/components/schemas/t_error_response'
+              - $ref: '#/components/schemas/t_structured_error_response'
+          examples:
+            t_error_response:
+              value:
+                - logref: error
+                  message: The request contains incorrect data. Change the request and send it again
+            t_structured_error_response:
+              value:
+                logref: structured_error
+                errors:
+                  - field: time_unit
+                    message: Field must be a positive number
+    Internal_Server_Error:
+      description: Internal Server Error. The server was unable to process the request correctly
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/t_error_response'
+          example:
+            - logref: error
+              message: The server was unable to process the request correctly. Please contact the administrator
