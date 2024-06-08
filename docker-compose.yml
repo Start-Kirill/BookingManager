@@ -1,0 +1,43 @@
+version: '3.5'
+services:
+  db:
+    build: postgresql
+    image: bookingmanager_postgresql:1.0.0
+    restart: always
+
+    environment:
+      POSTGRES_USER: booking_manager
+      POSTGRES_PASSWORD: q1w2e3r4
+    networks:
+      - booking_manager_ntwrk
+  pgadmin:
+    build: pgadmin
+    image: bookingmanager_pgadmin:1.0.0
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "82:80"
+    networks:
+      - booking_manager_ntwrk
+
+  swagger-ui:
+    build: swagger-ui
+    image: bookingmanager_swagger-ui:1.0.0
+    ports:
+      - "81:8080"
+    networks:
+      - booking_manager_ntwrk
+
+  booking-manager:
+    build: booking-manager
+    image: bookingmanager_booking-manager:1.0.0
+    ports:
+      - "80:8080"
+    networks:
+      - booking_manager_ntwrk
+
+networks:
+  booking_manager_ntwrk:
+    name: booking_manager_ntwrk

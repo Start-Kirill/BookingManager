@@ -12,13 +12,6 @@ BEGIN
 END
 $do$;
 
-
-CREATE DATABASE booking_manager
-            WITH OWNER = booking_manager
-            ENCODING = 'UTF8'
-            CONNECTION LIMIT = -1
-            IS_TEMPLATE = False;
-
 \c booking_manager booking_manager;
 
 DO
