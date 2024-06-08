@@ -28,8 +28,6 @@ public class UserServlet extends HttpServlet {
 
     private static final String URL_PART_BEFORE_DT_UPDATE_NAME = "dt_update";
 
-    private static final String COORDINATES_ABSENT_OR_WRONG_MESSAGE = "Координаты отсутствуют или неверны";
-
     private final IUserService userService;
 
     private final ObjectMapper objectMapper;
