@@ -14,6 +14,8 @@
 - apache-maven-3.9.4;
 - Docker.
 
+- Выполните команду 'mvn package' в корневой директории;
+- Выполните команду 'docker-compose up' для сборки проекта в docker;
 - Для просмотра урлов доступен open api file по адресу http://localhost:81
 - Для доступа к базе данных доступен PGAdmin по адресу http://localhost:82
    - Логин: admin@admin.com
