@@ -408,8 +408,10 @@ public class UserDao implements ICRUDDao<User> {
             UUID uuid = rs.getObject(UUID_COLUMN_NAME, UUID.class);
 
             User user = uuidUserMap.getOrDefault(uuid, createUserWithoutSupplies(rs));
-
-            user.getSupplies().add(createSupply(rs));
+            UUID supplyUuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME, UUID.class);
+            if (supplyUuid != null) {
+                user.getSupplies().add(createSupply(rs));
+            }
 
             uuidUserMap.put(uuid, user);
         }
@@ -442,7 +444,7 @@ public class UserDao implements ICRUDDao<User> {
     }
 
     private Supply createSupply(ResultSet rs) throws SQLException {
-        UUID uuid = (UUID) rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
+        UUID uuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME, UUID.class);
         String name = rs.getString(ALIAS_SUPPLY_NAME_COLUMN_NAME);
         BigDecimal price = rs.getBigDecimal(PRICE_COLUMN_NAME);
         Integer duration = (Integer) rs.getObject(DURATION_COLUMN_NAME);

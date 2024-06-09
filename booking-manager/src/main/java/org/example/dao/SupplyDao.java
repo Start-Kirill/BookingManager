@@ -341,26 +341,6 @@ public class SupplyDao implements ICRUDDao<Supply> {
         return sb.toString();
     }
 
-    private String createGetAllWithoutMastersSqlStatement() {
-        StringBuilder sb = new StringBuilder("SELECT ");
-
-        sb.append(SUPPLY_UUID_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(SUPPLY_NAME_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(PRICE_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(DURATION_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(SUPPLY_DT_CREATE_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(SUPPLY_DT_UPDATE_COLUMN_NAME);
-        sb.append(" FROM ");
-        sb.append(SUPPLY_TABLE_NAME);
-
-        return sb.toString();
-    }
-
     private String createGetOneByUuidSqlStatement() {
         StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
         sb.append(" WHERE ");
@@ -449,7 +429,10 @@ public class SupplyDao implements ICRUDDao<Supply> {
 
             Supply supply = uuidSupplyMap.getOrDefault(uuid, createSupplyWithoutMasters(rs));
 
-            supply.getMasters().add(createUser(rs));
+            UUID masterUuid = (UUID) rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME);
+            if (masterUuid != null) {
+                supply.getMasters().add(createUser(rs));
+            }
 
             uuidSupplyMap.put(uuid, supply);
         }
