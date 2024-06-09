@@ -130,10 +130,4 @@ class ScheduleServletTest {
 
         verify(scheduleService).delete(any(UUID.class), any(LocalDateTime.class));
     }
-
-    private void injectMock(Object target, String fieldName, Object mock) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, mock);
-    }
 }
