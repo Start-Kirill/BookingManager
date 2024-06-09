@@ -38,7 +38,7 @@ public class DaoFactory {
         return userDao;
     }
 
-    private static ICRUDDao<User> getSupplyDao() {
+    private static ICRUDDao<Supply> getSupplyDao() {
         if (supplyDao == null) {
             synchronized (DaoFactory.class) {
                 if (supplyDao == null) {
@@ -46,7 +46,7 @@ public class DaoFactory {
                 }
             }
         }
-        return userDao;
+        return supplyDao;
     }
 
     private static ICRUDDao<Schedule> getScheduleDao() {

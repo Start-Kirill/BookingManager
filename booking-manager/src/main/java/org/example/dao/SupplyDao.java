@@ -417,7 +417,10 @@ public class SupplyDao implements ICRUDDao<Supply> {
             if (supply == null) {
                 supply = createSupplyWithoutMasters(rs);
             }
-            supply.getMasters().add(createUser(rs));
+            UUID masterUuid = (UUID) rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME);
+            if (masterUuid != null) {
+                supply.getMasters().add(createUser(rs));
+            }
         }
         return supply;
     }
