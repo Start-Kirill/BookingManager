@@ -1,6 +1,7 @@
 package org.example.service.factory;
 
-import org.example.dao.factory.ScheduleDaoFactory;
+import org.example.core.enums.DaoType;
+import org.example.dao.factory.DaoFactory;
 import org.example.service.ScheduleService;
 import org.example.service.api.IScheduleService;
 
@@ -15,7 +16,7 @@ public class ScheduleServiceFactory {
         if (instance == null) {
             synchronized (ScheduleServiceFactory.class) {
                 if (instance == null) {
-                    instance = new ScheduleService(ScheduleDaoFactory.getInstance(),
+                    instance = new ScheduleService(DaoFactory.getInstance(DaoType.SCHEDULE),
                             UserServiceFactory.getInstance());
                 }
             }
