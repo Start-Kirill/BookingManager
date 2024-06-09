@@ -6,7 +6,6 @@ import org.example.core.entity.Supply;
 import org.example.core.entity.User;
 import org.example.core.enums.UserRole;
 import org.example.core.exceptions.NullArgumentException;
-import org.example.dao.api.ISupplyDao;
 import org.example.dao.api.IUserDao;
 import org.example.dao.ds.DataBaseConnection;
 import org.example.dao.exceptions.CreatingDBDataException;
@@ -38,7 +37,7 @@ class UserDaoTest {
 
     IUserDao userDao;
 
-    ISupplyDao supplyDao;
+    SupplyDao supplyDao;
 
     @BeforeAll
     static void beforeAll() {
@@ -57,10 +56,11 @@ class UserDaoTest {
         config.setJdbcUrl(postgres.getJdbcUrl());
         config.setUsername(postgres.getUsername());
         config.setPassword(postgres.getPassword());
-        config.setMaximumPoolSize(2);
+        config.setMaximumPoolSize(3);
         DataBaseConnection dataBaseConnection = new DataBaseConnection(new HikariDataSource(config));
         supplyDao = new SupplyDao(dataBaseConnection);
         userDao = new UserDao(supplyDao, dataBaseConnection);
+        supplyDao.setUserDao(userDao);
         try (Connection connection = dataBaseConnection.getConnection();
              Statement statement = connection.createStatement()) {
             statement.execute("TRUNCATE TABLE app.supply RESTART IDENTITY CASCADE");

@@ -37,6 +37,11 @@ public class ScheduleServlet extends HttpServlet {
         this.objectMapper = ObjectMapperFactory.getInstance();
     }
 
+    public ScheduleServlet(IScheduleService scheduleService, ObjectMapper objectMapper) {
+        this.scheduleService = scheduleService;
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);

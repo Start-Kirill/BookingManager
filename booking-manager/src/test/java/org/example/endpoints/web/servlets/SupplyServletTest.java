@@ -73,8 +73,6 @@ class SupplyServletTest {
         supplyCreateDto = new SupplyCreateDto("Supply test", BigDecimal.valueOf(100.5), 100, List.of(master.getUuid()));
         supply = new Supply(uuid, "Supply test", BigDecimal.valueOf(100.5), 100, List.of(master), now, now);
         master.setSupplies(List.of(supply));
-
-        injectMock(supplyServlet, "supplyService", supplyService);
     }
 
     @Test
@@ -103,7 +101,6 @@ class SupplyServletTest {
 
     @Test
     void testDoPost() throws Exception {
-        injectMock(supplyServlet, "objectMapper", objectMapper);
         when(request.getInputStream()).thenReturn(inputStream);
         when(objectMapper.readValue(any(ServletInputStream.class), eq(SupplyCreateDto.class))).thenReturn(supplyCreateDto);
         when(supplyService.save(any(SupplyCreateDto.class))).thenReturn(supply);
@@ -118,7 +115,6 @@ class SupplyServletTest {
 
     @Test
     void testDoPut() throws Exception {
-        injectMock(supplyServlet, "objectMapper", objectMapper);
         when(request.getRequestURI()).thenReturn("http://localhost:8080/BookingManager-1.0-SNAPSHOT/supply/" + uuid.toString() + "/dt_update/" + now.toInstant(ZoneOffset.UTC).toEpochMilli());
         when(request.getInputStream()).thenReturn(inputStream);
         when(objectMapper.readValue(any(ServletInputStream.class), eq(SupplyCreateDto.class))).thenReturn(supplyCreateDto);
@@ -140,9 +136,4 @@ class SupplyServletTest {
         verify(supplyService).delete(any(UUID.class), any(LocalDateTime.class));
     }
 
-    private void injectMock(Object target, String fieldName, Object mock) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, mock);
-    }
 }
