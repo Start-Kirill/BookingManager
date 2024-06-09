@@ -37,6 +37,11 @@ public class UserServlet extends HttpServlet {
         this.objectMapper = ObjectMapperFactory.getInstance();
     }
 
+    public UserServlet(IUserService userService, ObjectMapper objectMapper) {
+        this.userService = userService;
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         UUID uuid = PathVariablesSearcherUtil.retrieveUuidAsPathVariable(req, URL_PART_BEFORE_UUID_NAME);

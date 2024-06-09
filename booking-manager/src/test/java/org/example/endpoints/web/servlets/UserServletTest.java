@@ -73,8 +73,6 @@ class UserServletTest {
         userCreateDto = new UserCreateDto("User test", "+12345678", UserRole.MASTER, List.of(supplyUuid));
         user = new User(uuid, "User test", "+12345678", UserRole.MASTER, List.of(supply), now, now);
         supply.setMasters(List.of(user));
-
-        injectMock(userServlet, "userService", userService);
     }
 
     @Test
@@ -103,7 +101,6 @@ class UserServletTest {
 
     @Test
     void testDoPost() throws Exception {
-        injectMock(userServlet, "objectMapper", objectMapper);
         when(request.getInputStream()).thenReturn(inputStream);
         when(objectMapper.readValue(any(ServletInputStream.class), eq(UserCreateDto.class))).thenReturn(userCreateDto);
         when(userService.save(any(UserCreateDto.class))).thenReturn(user);
@@ -118,7 +115,6 @@ class UserServletTest {
 
     @Test
     void testDoPut() throws Exception {
-        injectMock(userServlet, "objectMapper", objectMapper);
         when(request.getRequestURI()).thenReturn("http://localhost:8080/BookingManager-1.0-SNAPSHOT/user/" + uuid.toString() + "/dt_update/" + now.toInstant(ZoneOffset.UTC).toEpochMilli());
         when(request.getInputStream()).thenReturn(inputStream);
         when(objectMapper.readValue(any(ServletInputStream.class), eq(UserCreateDto.class))).thenReturn(userCreateDto);
@@ -138,11 +134,5 @@ class UserServletTest {
         userServlet.doDelete(request, response);
 
         verify(userService).delete(any(UUID.class), any(LocalDateTime.class));
-    }
-
-    private void injectMock(Object target, String fieldName, Object mock) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, mock);
     }
 }

@@ -37,6 +37,11 @@ public class SupplyServlet extends HttpServlet {
         this.objectMapper = ObjectMapperFactory.getInstance();
     }
 
+    public SupplyServlet(ISupplyService supplyService, ObjectMapper objectMapper) {
+        this.supplyService = supplyService;
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         ServletInputStream inputStream = req.getInputStream();

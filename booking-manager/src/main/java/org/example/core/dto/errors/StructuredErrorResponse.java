@@ -15,8 +15,6 @@ public class StructuredErrorResponse {
     @JsonSerialize(converter = StructuredErrorConverter.class)
     private Map<String, String> errors;
 
-    public StructuredErrorResponse() {
-    }
 
     public StructuredErrorResponse(ErrorType logref, Map<String, String> errors) {
         this.logref = logref;

@@ -68,8 +68,6 @@ class ScheduleServletTest {
         uuid = UUID.randomUUID();
         scheduleCreateDto = new ScheduleCreateDto(masterUuid, now.plusDays(1), now.plusDays(2));
         schedule = new Schedule(uuid, master, now.plusDays(1), now.plusDays(2), now, now);
-
-        injectMock(scheduleServlet, "scheduleService", scheduleService);
     }
 
     @Test
@@ -98,7 +96,6 @@ class ScheduleServletTest {
 
     @Test
     void testDoPost() throws Exception {
-        injectMock(scheduleServlet, "objectMapper", objectMapper);
         when(request.getInputStream()).thenReturn(inputStream);
         when(objectMapper.readValue(any(ServletInputStream.class), eq(ScheduleCreateDto.class))).thenReturn(scheduleCreateDto);
         when(scheduleService.save(any(ScheduleCreateDto.class))).thenReturn(schedule);
@@ -113,7 +110,6 @@ class ScheduleServletTest {
 
     @Test
     void testDoPut() throws Exception {
-        injectMock(scheduleServlet, "objectMapper", objectMapper);
         when(request.getRequestURI()).thenReturn("http://localhost:8080/BookingManager-1.0-SNAPSHOT/schedule/" + uuid.toString() + "/dt_update/" + now.toInstant(ZoneOffset.UTC).toEpochMilli());
         when(request.getInputStream()).thenReturn(inputStream);
         when(objectMapper.readValue(any(ServletInputStream.class), eq(ScheduleCreateDto.class))).thenReturn(scheduleCreateDto);
