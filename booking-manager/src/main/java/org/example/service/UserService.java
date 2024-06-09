@@ -8,7 +8,7 @@ import org.example.core.enums.ErrorType;
 import org.example.core.enums.UserRole;
 import org.example.core.mappers.UserMapper;
 import org.example.core.util.NullCheckUtil;
-import org.example.dao.api.IUserDao;
+import org.example.dao.api.ICRUDDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.api.IUserService;
 import org.example.service.exceptions.InvalidUserBodyException;
@@ -52,11 +52,11 @@ public class UserService implements IUserService {
     private static final String SUCH_USER_NOT_EXISTS_MESSAGE = "Такой пользователь не существует";
     private static final String ONE_OR_MORE_USERS_NOT_EXISTS_MESSAGE = "Один или более пользователей не существуют";
 
-    private final IUserDao userDao;
+    private final ICRUDDao<User> userDao;
 
     private final ISupplyService supplyService;
 
-    public UserService(IUserDao userDao,
+    public UserService(ICRUDDao<User> userDao,
                        ISupplyService supplyService) {
         this.userDao = userDao;
         this.supplyService = supplyService;
@@ -84,12 +84,17 @@ public class UserService implements IUserService {
                 throw new SuchElementNotExistsException(List.of(new ErrorResponse(ErrorType.ERROR, ONE_OR_MORE_USERS_NOT_EXISTS_MESSAGE)));
             }
         });
-        return this.userDao.get(uuids);
+        return uuids.stream().map(u -> this.userDao.get(u).orElseThrow()).toList();
     }
 
     @Override
     public boolean exists(UUID uuid) {
-        return this.userDao.exists(uuid);
+        try {
+            this.userDao.get(uuid).orElseThrow();
+            return true;
+        } catch (NoSuchElementException ex) {
+            return false;
+        }
     }
 
     @Override

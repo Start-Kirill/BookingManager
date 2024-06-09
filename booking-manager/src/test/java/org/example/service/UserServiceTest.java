@@ -4,7 +4,7 @@ import org.example.core.dto.UserCreateDto;
 import org.example.core.entity.User;
 import org.example.core.enums.UserRole;
 import org.example.core.exceptions.NullArgumentException;
-import org.example.dao.api.IUserDao;
+import org.example.dao.api.ICRUDDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.exceptions.InvalidUserBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock
-    private IUserDao userDao;
+    private ICRUDDao<User> userDao;
 
     @Mock
     private ISupplyService supplyService;
@@ -55,23 +55,21 @@ class UserServiceTest {
     @Test
     void shouldGetByUuid() {
         UUID uuid = mock(UUID.class);
-        when(userDao.exists(uuid)).thenReturn(true);
         when(userDao.get(uuid)).thenReturn(Optional.of(user));
 
         User result = this.userService.get(uuid);
 
         assertEquals(user, result);
-        verify(userDao, times(1)).exists(uuid);
-        verify(userDao, times(1)).get(uuid);
+        verify(userDao, times(2)).get(uuid);
     }
 
     @Test
     void shouldThrowWhileGetByUuid() {
         UUID uuid = mock(UUID.class);
-        when(userDao.exists(uuid)).thenReturn(false);
+        when(userDao.get(uuid)).thenReturn(Optional.empty());
 
         assertThrows(SuchElementNotExistsException.class, () -> this.userService.get(uuid));
-        verify(userDao, times(1)).exists(uuid);
+        verify(userDao, times(1)).get(uuid);
     }
 
     @Test
@@ -100,40 +98,38 @@ class UserServiceTest {
     void shouldGetListByList() {
         List<User> userList = List.of(user);
         List<UUID> uuids = List.of(user.getUuid());
-        when(userDao.exists(user.getUuid())).thenReturn(true);
-        when(userDao.get(uuids)).thenReturn(userList);
+        when(userDao.get(user.getUuid())).thenReturn(Optional.of(user));
 
         List<User> result = this.userService.get(uuids);
 
         assertEquals(userList, result);
-        verify(userDao, times(1)).exists(user.getUuid());
-        verify(userDao, times(1)).get(uuids);
+        verify(userDao, times(2)).get(user.getUuid());
     }
 
     @Test
     void shouldThrowWhileGetListByList() {
         List<UUID> uuids = List.of(user.getUuid());
-        when(userDao.exists(user.getUuid())).thenReturn(false);
+        when(userDao.get(user.getUuid())).thenReturn(Optional.empty());
 
         assertThrows(SuchElementNotExistsException.class, () -> this.userService.get(uuids));
-        verify(userDao, times(1)).exists(user.getUuid());
+        verify(userDao, times(1)).get(user.getUuid());
     }
 
 
     @Test
     void shouldExists() {
-        when(userDao.exists(user.getUuid())).thenReturn(true);
+        when(userDao.get(user.getUuid())).thenReturn(Optional.of(user));
 
         assertTrue(userService.exists(user.getUuid()));
-        verify(userDao, times(1)).exists(user.getUuid());
+        verify(userDao, times(1)).get(user.getUuid());
     }
 
     @Test
     void shouldNotExists() {
-        when(userDao.exists(user.getUuid())).thenReturn(false);
+        when(userDao.get(user.getUuid())).thenReturn(Optional.empty());
 
         assertFalse(userService.exists(user.getUuid()));
-        verify(userDao, times(1)).exists(user.getUuid());
+        verify(userDao, times(1)).get(user.getUuid());
     }
 
     @ParameterizedTest
@@ -185,7 +181,6 @@ class UserServiceTest {
     void shouldUpdate(String name, String phone, String role, String supply) {
         UUID userId = user.getUuid();
         LocalDateTime dtUpdate = user.getDtUpdate();
-        when(userDao.exists(userId)).thenReturn(true);
         when(userDao.get(userId)).thenReturn(Optional.of(user));
         when(userDao.update(any(User.class))).thenReturn(user);
 
@@ -240,7 +235,6 @@ class UserServiceTest {
     void shouldThrowWhileUpdateNotUpToDatedObject() {
         UUID uuid = user.getUuid();
         LocalDateTime dtUpdate = LocalDateTime.now().minusDays(1);
-        when(userDao.exists(uuid)).thenReturn(true);
         when(userDao.get(uuid)).thenReturn(Optional.of(user));
 
         assertThrows(ObjectNotUpToDatedException.class, () -> userService.update(userCreateDto, uuid, dtUpdate));
@@ -251,7 +245,6 @@ class UserServiceTest {
     void shouldDelete() {
         UUID uuid = user.getUuid();
         LocalDateTime dtUpdate = user.getDtUpdate();
-        when(userDao.exists(uuid)).thenReturn(true);
         when(userDao.get(uuid)).thenReturn(Optional.of(user));
 
         userService.delete(uuid, dtUpdate);
@@ -272,7 +265,6 @@ class UserServiceTest {
     void shouldThrowWhileDeleteNotUpToDatedObject() {
         UUID uuid = user.getUuid();
         LocalDateTime dtUpdate = LocalDateTime.now().minusDays(1);
-        when(userDao.exists(uuid)).thenReturn(true);
         when(userDao.get(uuid)).thenReturn(Optional.of(user));
 
         assertThrows(ObjectNotUpToDatedException.class, () -> userService.delete(uuid, dtUpdate));

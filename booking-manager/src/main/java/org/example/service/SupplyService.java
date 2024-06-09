@@ -7,7 +7,7 @@ import org.example.core.entity.User;
 import org.example.core.enums.ErrorType;
 import org.example.core.mappers.SupplyMapper;
 import org.example.core.util.NullCheckUtil;
-import org.example.dao.api.ISupplyDao;
+import org.example.dao.api.ICRUDDao;
 import org.example.service.api.ISupplyService;
 import org.example.service.api.IUserService;
 import org.example.service.exceptions.InvalidSupplyBodyException;
@@ -54,11 +54,11 @@ public class SupplyService implements ISupplyService {
 
     private static final String ONE_OR_MORE_SUPPLIES_NOT_EXISTS_MESSAGE = "Одна или более услуга из списка не существует";
 
-    private final ISupplyDao supplyDao;
+    private final ICRUDDao<Supply> supplyDao;
 
     private IUserService userService;
 
-    public SupplyService(ISupplyDao supplyDao) {
+    public SupplyService(ICRUDDao<Supply> supplyDao) {
         this.supplyDao = supplyDao;
     }
 
@@ -93,12 +93,17 @@ public class SupplyService implements ISupplyService {
                 throw new SuchElementNotExistsException(List.of(new ErrorResponse(ErrorType.ERROR, ONE_OR_MORE_SUPPLIES_NOT_EXISTS_MESSAGE)));
             }
         });
-        return this.supplyDao.get(uuids);
+        return uuids.stream().map(u -> this.supplyDao.get(u).orElseThrow()).toList();
     }
 
     @Override
     public boolean exists(UUID uuid) {
-        return this.supplyDao.exists(uuid);
+        try {
+            this.supplyDao.get(uuid).orElseThrow();
+            return true;
+        } catch (NoSuchElementException ex) {
+            return false;
+        }
     }
 
     @Override

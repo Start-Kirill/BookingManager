@@ -4,22 +4,21 @@ import org.example.core.dto.errors.ErrorResponse;
 import org.example.core.entity.Supply;
 import org.example.core.entity.User;
 import org.example.core.enums.ErrorType;
+import org.example.core.enums.UserRole;
 import org.example.core.util.NullCheckUtil;
+import org.example.dao.api.ICRUDDao;
 import org.example.dao.api.IDataBaseConnection;
-import org.example.dao.api.ISupplyDao;
-import org.example.dao.api.IUserDao;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
-import org.example.dao.factory.UserDaoFactory;
 
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
-public class SupplyDao implements ISupplyDao {
+public class SupplyDao implements ICRUDDao<Supply> {
 
     private static final String USERS_SUPPLY_TABLE_NAME = "app.users_supply";
 
@@ -29,17 +28,45 @@ public class SupplyDao implements ISupplyDao {
 
     private static final String SUPPLY_TABLE_NAME = "app.supply";
 
+    private static final String USERS_TABLE_NAME = "app.users";
+
     private static final String UUID_COLUMN_NAME = "uuid";
 
     private static final String NAME_COLUMN_NAME = "name";
+
+    private static final String DT_CREATE_COLUMN_NAME = "dt_create";
+
+    private static final String DT_UPDATE_COLUMN_NAME = "dt_update";
+
+    private static final String SUPPLY_UUID_COLUMN_NAME = "supply.uuid";
+
+    private static final String SUPPLY_NAME_COLUMN_NAME = "supply.name";
 
     private static final String PRICE_COLUMN_NAME = "price";
 
     private static final String DURATION_COLUMN_NAME = "duration";
 
-    private static final String DT_CREATE_COLUMN_NAME = "dt_create";
+    private static final String SUPPLY_DT_CREATE_COLUMN_NAME = "supply.dt_create";
 
-    private static final String DT_UPDATE_COLUMN_NAME = "dt_update";
+    private static final String SUPPLY_DT_UPDATE_COLUMN_NAME = "supply.dt_update";
+
+    private static final String USERS_UUID_COLUMN_NAME = "users.uuid";
+
+    private static final String USERS_NAME_COLUMN_NAME = "users.name";
+
+    private static final String ALIAS_USERS_NAME_COLUMN_NAME = "u_name";
+
+    private static final String PHONE_NUMBER_COLUMN_NAME = "phone_number";
+
+    private static final String USER_ROLE_COLUMN_NAME = "role";
+
+    private static final String USERS_DT_CREATE_COLUMN_NAME = "users.dt_create";
+
+    private static final String ALIAS_USERS_DT_CREATE_COLUMN_NAME = "u_dt_create";
+
+    private static final String USERS_DT_UPDATE_COLUMN_NAME = "users.dt_update";
+
+    private static final String ALIAS_USERS_DT_UPDATE_COLUMN_NAME = "u_dt_update";
 
     private static final String FAIL_RECEIVE_SINGLE_SUPPLY_MESSAGE = "Ошибка получения услуги";
 
@@ -53,34 +80,17 @@ public class SupplyDao implements ISupplyDao {
 
     private static final String IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL = "Невозможно получить услугу так как в качестве аргументы был передан null";
 
-    private static final String IMPOSSIBLE_GET_LIST_OF_SUPPLIES_CAUSE_NULL = "Невозможно получить список услуг так как в качестве аргументы был передан null";
-
     private static final String IMPOSSIBLE_SAVE_SUPPLY_CAUSE_NULL = "Невозможно создать услугу так как в качестве аргумента был передан null";
 
     private static final String IMPOSSIBLE_UPDATE_SUPPLY_CAUSE_NULL = "Невозможно обновить услугу так как в качестве аргумента был передан null";
 
     private static final String IMPOSSIBLE_DELETE_SUPPLY_CAUSE_NULL = "Невозможно удалить услугу так как в качестве аргумента был передан null";
 
-    private static final String IMPOSSIBLE_CHECK_IF_EXISTS_SUPPLY_CAUSE_NULL = "Невозможно проверить существование услуги так как в качестве аргумента был передан null";
-
-    private static final String FAIL_CHECK_IF_SUPPLY_EXISTS_MESSAGE = "Ошибка проверки существования услуги";
-
     private final IDataBaseConnection dataBaseConnection;
-
-    private IUserDao userDao;
 
     public SupplyDao(IDataBaseConnection dataBaseConnection) {
         this.dataBaseConnection = dataBaseConnection;
     }
-
-    public IUserDao getUserDao() {
-        return userDao == null ? UserDaoFactory.getInstance() : userDao;
-    }
-
-    public void setUserDao(IUserDao userDao) {
-        this.userDao = userDao;
-    }
-
 
     @Override
     public Optional<Supply> get(UUID uuid) {
@@ -122,54 +132,6 @@ public class SupplyDao implements ISupplyDao {
         }
     }
 
-    @Override
-    public List<Supply> get(List<UUID> uuids) {
-        NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_SUPPLIES_CAUSE_NULL, uuids);
-        if (uuids.isEmpty()) {
-            return new ArrayList<>();
-        }
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement selectInUuidsPs = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
-
-            for (int i = 0; i < uuids.size(); i++) {
-                selectInUuidsPs.setObject(i + 1, uuids.get(i));
-            }
-
-            ResultSet rs = selectInUuidsPs.executeQuery();
-
-            List<Supply> listOfSupplies = createListOfSupplies(rs);
-
-            rs.close();
-
-            return listOfSupplies;
-        } catch (SQLException e) {
-            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_SUPPLIES_MESSAGE)));
-        }
-    }
-
-    @Override
-    public Optional<Supply> getWithoutMasters(UUID uuid) {
-        NullCheckUtil.checkNull(IMPOSSIBLE_GET_SUPPLY_CAUSE_NULL, uuid);
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement selectOneMastersFreePs = c.prepareStatement(createGetOneByUuidWithoutMastersSqlStatement())) {
-
-            selectOneMastersFreePs.setObject(1, uuid);
-
-            ResultSet rs = selectOneMastersFreePs.executeQuery();
-            Supply supply = null;
-            if (rs.next()) {
-                supply = createSupplyWithoutMasters(rs);
-            }
-
-            rs.close();
-
-            return Optional.ofNullable(supply);
-
-        } catch (SQLException e) {
-            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_SINGLE_SUPPLY_MESSAGE)));
-        }
-    }
-
 
     @Override
     public Supply save(Supply supply) {
@@ -182,8 +144,6 @@ public class SupplyDao implements ISupplyDao {
             insertSupply(supply, insertSupplyPs);
 
             insertSupplyUsers(supply, insertSupplyUsersPs);
-
-            updateMaters(supply.getMasters());
 
             c.commit();
 
@@ -201,12 +161,9 @@ public class SupplyDao implements ISupplyDao {
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement updateSupplyPs = c.prepareStatement(createUpdateSqlStatement());
              PreparedStatement deleteSupplyUsersPs = c.prepareStatement(createDeleteSupplyUsersSqlStatement());
-             PreparedStatement insertSupplyUsersPs = c.prepareStatement(createInsertSupplyUsersSqlStatement());
-             PreparedStatement selectSupplyUsersPs = c.prepareStatement(createGetSupplyUsersSqlStatement())) {
+             PreparedStatement insertSupplyUsersPs = c.prepareStatement(createInsertSupplyUsersSqlStatement())) {
 
             c.setAutoCommit(false);
-
-            List<User> performedMasters = findPerformedMasters(supply, selectSupplyUsersPs);
 
             deleteSupplyUsers(supply, deleteSupplyUsersPs);
 
@@ -214,48 +171,11 @@ public class SupplyDao implements ISupplyDao {
 
             Supply updatedSupply = updateSupply(supply, updateSupplyPs);
 
-            updateMaters(performedMasters);
-
             c.commit();
 
             return updatedSupply;
         } catch (SQLException e) {
             throw new UpdatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SUPPLY_MESSAGE)));
-        }
-    }
-
-    @Override
-    public void systemUpdate(Supply supply) throws SQLException {
-        NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_SUPPLY_CAUSE_NULL, supply);
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement systemSupplyUpdatePs = c.prepareStatement(createSystemUpdateSqlStatement())) {
-            c.setAutoCommit(false);
-
-            systemSupplyUpdatePs.setObject(1, supply.getUuid());
-            systemSupplyUpdatePs.setObject(2, supply.getDtUpdate());
-
-            if (systemSupplyUpdatePs.executeUpdate() < 1) {
-                throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_SUPPLY_MESSAGE)));
-            }
-
-            c.commit();
-        }
-    }
-
-    @Override
-    public boolean exists(UUID uuid) {
-        NullCheckUtil.checkNull(IMPOSSIBLE_CHECK_IF_EXISTS_SUPPLY_CAUSE_NULL, uuid);
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement existsPs = c.prepareStatement(createExistsSqlStatement())) {
-            existsPs.setObject(1, uuid);
-            ResultSet rs = existsPs.executeQuery();
-            boolean exists = false;
-            if (rs.next()) {
-                exists = rs.getBoolean(1);
-            }
-            return exists;
-        } catch (SQLException e) {
-            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CHECK_IF_SUPPLY_EXISTS_MESSAGE)));
         }
     }
 
@@ -271,8 +191,6 @@ public class SupplyDao implements ISupplyDao {
 
             deleteSupply(supply, deleteSupplyPs);
 
-            updateMaters(supply.getMasters());
-
             c.commit();
         } catch (SQLException e) {
             throw new DeletingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SUPPLY_MESSAGE)));
@@ -286,12 +204,6 @@ public class SupplyDao implements ISupplyDao {
         int supplyExecuteUpdate = deleteSupplyPs.executeUpdate();
         if (supplyExecuteUpdate < 1) {
             throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_SUPPLY_MESSAGE)));
-        }
-    }
-
-    private void updateMaters(List<User> masters) throws SQLException {
-        for (User master : masters) {
-            this.getUserDao().systemUpdate(master);
         }
     }
 
@@ -356,38 +268,6 @@ public class SupplyDao implements ISupplyDao {
         return updatedSupply;
     }
 
-    private List<User> getSupplyMasters(Supply supply, PreparedStatement selectUserSuppliesPs) throws SQLException {
-        List<User> performedUser = new ArrayList<>();
-
-        selectUserSuppliesPs.setObject(1, supply.getUuid());
-        ResultSet rs = selectUserSuppliesPs.executeQuery();
-        while (rs.next()) {
-            UUID uuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME, UUID.class);
-            performedUser.add(this.getUserDao().getWithoutSupplies(uuid).orElseThrow());
-        }
-        rs.close();
-        return performedUser;
-    }
-
-    private List<User> findPerformedMasters(Supply supply, PreparedStatement selectUserSuppliesPs) throws SQLException {
-        List<User> performedUser = getSupplyMasters(supply, selectUserSuppliesPs);
-        supply.getMasters().forEach(m -> {
-            if (!performedUser.contains(m)) {
-                performedUser.add(m);
-            }
-        });
-        return performedUser;
-    }
-
-    private String createExistsSqlStatement() {
-        StringBuilder sb = new StringBuilder("SELECT EXISTS ( SELECT 1 FROM ");
-        sb.append(SUPPLY_TABLE_NAME);
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" = ?)");
-        return sb.toString();
-    }
-
     private String createInsertSqlStatement() {
         StringBuilder sb = new StringBuilder("INSERT INTO ");
         sb.append(SUPPLY_TABLE_NAME);
@@ -410,84 +290,61 @@ public class SupplyDao implements ISupplyDao {
     private String createGetAllSqlStatement() {
         StringBuilder sb = new StringBuilder("SELECT ");
 
-        sb.append(UUID_COLUMN_NAME);
+        sb.append(SUPPLY_UUID_COLUMN_NAME);
         sb.append(", ");
-        sb.append(NAME_COLUMN_NAME);
+        sb.append(SUPPLY_NAME_COLUMN_NAME);
         sb.append(", ");
         sb.append(PRICE_COLUMN_NAME);
         sb.append(", ");
         sb.append(DURATION_COLUMN_NAME);
         sb.append(", ");
-        sb.append(DT_CREATE_COLUMN_NAME);
+        sb.append(SUPPLY_DT_CREATE_COLUMN_NAME);
         sb.append(", ");
-        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(SUPPLY_DT_UPDATE_COLUMN_NAME);
         sb.append(", ");
         sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(USERS_NAME_COLUMN_NAME);
+        sb.append(" AS ");
+        sb.append(ALIAS_USERS_NAME_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(PHONE_NUMBER_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(USER_ROLE_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(USERS_DT_CREATE_COLUMN_NAME);
+        sb.append(" AS ");
+        sb.append(ALIAS_USERS_DT_CREATE_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(USERS_DT_UPDATE_COLUMN_NAME);
+        sb.append(" AS ");
+        sb.append(ALIAS_USERS_DT_UPDATE_COLUMN_NAME);
         sb.append(" FROM ");
         sb.append(SUPPLY_TABLE_NAME);
         sb.append(" LEFT JOIN ");
         sb.append(USERS_SUPPLY_TABLE_NAME);
         sb.append(" ON ");
-        sb.append(SUPPLY_TABLE_NAME);
-        sb.append(".");
-        sb.append(UUID_COLUMN_NAME);
+        sb.append(SUPPLY_UUID_COLUMN_NAME);
         sb.append(" = ");
         sb.append(USERS_SUPPLY_TABLE_NAME);
         sb.append(".");
         sb.append(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
+        sb.append(" LEFT JOIN ");
+        sb.append(USERS_TABLE_NAME);
+        sb.append(" ON ");
+        sb.append(USERS_UUID_COLUMN_NAME);
+        sb.append(" = ");
+        sb.append(USERS_SUPPLY_TABLE_NAME);
+        sb.append(".");
+        sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
 
-        return sb.toString();
-    }
-
-    private String createGetAllWithoutMastersSqlStatement() {
-        StringBuilder sb = new StringBuilder("SELECT ");
-
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(NAME_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(PRICE_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(DURATION_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(DT_CREATE_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(DT_UPDATE_COLUMN_NAME);
-        sb.append(" FROM ");
-        sb.append(SUPPLY_TABLE_NAME);
-
-        return sb.toString();
-    }
-
-    private String createGetOneByUuidWithoutMastersSqlStatement() {
-        StringBuilder sb = new StringBuilder(createGetAllWithoutMastersSqlStatement());
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" = ?");
-        return sb.toString();
-    }
-
-    private String createGetAccordingToUuidsSqlStatement(int number) {
-        StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" IN (");
-        boolean needComma = false;
-        for (int i = 0; i < number; i++) {
-            if (needComma) {
-                sb.append(", ");
-            }
-            sb.append("?");
-            needComma = true;
-        }
-        sb.append(")");
         return sb.toString();
     }
 
     private String createGetOneByUuidSqlStatement() {
         StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
         sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
+        sb.append(SUPPLY_UUID_COLUMN_NAME);
         sb.append(" = ?");
         return sb.toString();
     }
@@ -509,20 +366,6 @@ public class SupplyDao implements ISupplyDao {
         sb.append(" = ? AND ");
         sb.append(DT_UPDATE_COLUMN_NAME);
         sb.append(" = ? RETURNING *");
-        return sb.toString();
-    }
-
-    private String createSystemUpdateSqlStatement() {
-        StringBuilder sb = new StringBuilder("UPDATE ");
-        sb.append(SUPPLY_TABLE_NAME);
-        sb.append(" SET ");
-        sb.append(DT_UPDATE_COLUMN_NAME);
-        sb.append(" = NOW()");
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" = ? AND ");
-        sb.append(DT_UPDATE_COLUMN_NAME);
-        sb.append(" = ?");
         return sb.toString();
     }
 
@@ -557,17 +400,6 @@ public class SupplyDao implements ISupplyDao {
         return sb.toString();
     }
 
-    private String createGetSupplyUsersSqlStatement() {
-        StringBuilder sb = new StringBuilder("SELECT ");
-        sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
-        sb.append(" FROM ");
-        sb.append(USERS_SUPPLY_TABLE_NAME);
-        sb.append(" WHERE ");
-        sb.append(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
-        sb.append(" =?");
-        return sb.toString();
-    }
-
 
     private Supply createSupplyWithoutMasters(ResultSet rs) throws SQLException {
         UUID uuid = (UUID) rs.getObject(UUID_COLUMN_NAME);
@@ -581,18 +413,14 @@ public class SupplyDao implements ISupplyDao {
 
     private Supply createSupply(ResultSet rs) throws SQLException {
         Supply supply = null;
-        List<UUID> masterUuids = new ArrayList<>();
         while (rs.next()) {
             if (supply == null) {
                 supply = createSupplyWithoutMasters(rs);
             }
-            UUID masterUuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME, UUID.class);
+            UUID masterUuid = (UUID) rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME);
             if (masterUuid != null) {
-                masterUuids.add(masterUuid);
+                supply.getMasters().add(createUser(rs));
             }
-        }
-        if (supply != null) {
-            supply.setMasters(this.getUserDao().getWithoutSupplies(masterUuids));
         }
         return supply;
     }
@@ -604,15 +432,25 @@ public class SupplyDao implements ISupplyDao {
 
             Supply supply = uuidSupplyMap.getOrDefault(uuid, createSupplyWithoutMasters(rs));
 
-            Object rawUuid = rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME);
-            if (rawUuid != null) {
-                UUID masterUuid = (UUID) rawUuid;
-                supply.getMasters().add(this.getUserDao().getWithoutSupplies(masterUuid).orElseThrow());
+            UUID masterUuid = (UUID) rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME);
+            if (masterUuid != null) {
+                supply.getMasters().add(createUser(rs));
             }
 
             uuidSupplyMap.put(uuid, supply);
         }
         return uuidSupplyMap.values().stream().toList();
+    }
+
+    private User createUser(ResultSet rs) throws SQLException {
+        UUID uuid = (UUID) rs.getObject(USERS_SUPPLY_USER_COLUMN_NAME);
+        String name = rs.getString(ALIAS_USERS_NAME_COLUMN_NAME);
+        String phone = rs.getString(PHONE_NUMBER_COLUMN_NAME);
+        UserRole role = UserRole.fromString(rs.getString(USER_ROLE_COLUMN_NAME));
+        LocalDateTime dtCreate = rs.getTimestamp(ALIAS_USERS_DT_CREATE_COLUMN_NAME).toLocalDateTime();
+        LocalDateTime dtUpdate = rs.getTimestamp(ALIAS_USERS_DT_UPDATE_COLUMN_NAME).toLocalDateTime();
+
+        return new User(uuid, name, phone, role, new ArrayList<>(), dtCreate, dtUpdate);
     }
 
 }

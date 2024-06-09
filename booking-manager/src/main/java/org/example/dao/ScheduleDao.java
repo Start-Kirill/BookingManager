@@ -5,9 +5,8 @@ import org.example.core.entity.Schedule;
 import org.example.core.entity.User;
 import org.example.core.enums.ErrorType;
 import org.example.core.util.NullCheckUtil;
+import org.example.dao.api.ICRUDDao;
 import org.example.dao.api.IDataBaseConnection;
-import org.example.dao.api.IScheduleDao;
-import org.example.dao.api.IUserDao;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
@@ -20,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class ScheduleDao implements IScheduleDao {
+public class ScheduleDao implements ICRUDDao<Schedule> {
 
     private static final String SCHEDULE_TABLE_NAME = "app.schedule";
 
@@ -54,15 +53,11 @@ public class ScheduleDao implements IScheduleDao {
 
     private static final String IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL = "Невозможно удалить график так как в качестве аргумента был передан null";
 
-    private static final String IMPOSSIBLE_CHECK_IF_EXISTS_SCHEDULE_CAUSE_NULL = "Невозможно проверить существование графика так как в качестве аргумента был передан null";
-
-    private static final String FAIL_CHECK_IF_SCHEDULE_EXISTS_MESSAGE = "Ошибка проверки существования графика";
-
-    private final IUserDao userDao;
+    private final ICRUDDao<User> userDao;
 
     private final IDataBaseConnection dataBaseConnection;
 
-    public ScheduleDao(IUserDao userDao,
+    public ScheduleDao(ICRUDDao<User> userDao,
                        IDataBaseConnection dataBaseConnection) {
         this.userDao = userDao;
         this.dataBaseConnection = dataBaseConnection;
@@ -149,23 +144,6 @@ public class ScheduleDao implements IScheduleDao {
     }
 
     @Override
-    public boolean exists(UUID uuid) {
-        NullCheckUtil.checkNull(IMPOSSIBLE_CHECK_IF_EXISTS_SCHEDULE_CAUSE_NULL, uuid);
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement existsPs = c.prepareStatement(createExistsSqlStatement())) {
-            existsPs.setObject(1, uuid);
-            ResultSet rs = existsPs.executeQuery();
-            boolean exists = false;
-            if (rs.next()) {
-                exists = rs.getBoolean(1);
-            }
-            return exists;
-        } catch (SQLException e) {
-            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CHECK_IF_SCHEDULE_EXISTS_MESSAGE)));
-        }
-    }
-
-    @Override
     public void delete(Schedule schedule) {
         NullCheckUtil.checkNull(IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL, schedule);
         try (Connection c = dataBaseConnection.getConnection();
@@ -238,15 +216,6 @@ public class ScheduleDao implements IScheduleDao {
             }
             return updatedSchedule;
         }
-    }
-
-    private String createExistsSqlStatement() {
-        StringBuilder sb = new StringBuilder("SELECT EXISTS ( SELECT 1 FROM ");
-        sb.append(SCHEDULE_TABLE_NAME);
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" = ?)");
-        return sb.toString();
     }
 
     private String createInsertSqlStatement() {

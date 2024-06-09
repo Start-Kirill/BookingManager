@@ -6,7 +6,7 @@ import org.example.core.entity.Schedule;
 import org.example.core.enums.ErrorType;
 import org.example.core.mappers.ScheduleMapper;
 import org.example.core.util.NullCheckUtil;
-import org.example.dao.api.IScheduleDao;
+import org.example.dao.api.ICRUDDao;
 import org.example.service.api.IScheduleService;
 import org.example.service.api.IUserService;
 import org.example.service.exceptions.InvalidScheduleBodyException;
@@ -15,10 +15,7 @@ import org.example.service.exceptions.SuchElementNotExistsException;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class ScheduleService implements IScheduleService {
 
@@ -45,11 +42,11 @@ public class ScheduleService implements IScheduleService {
     private static final String IMPOSSIBLE_DELETE_SCHEDULE_CAUSE_NULL = "Невозможно удалить график так как в качестве аргумента был передан null";
     private static final String SUCH_SCHEDULE_NOT_EXISTS_MESSAGE = "Такого графика не существует";
 
-    private final IScheduleDao scheduleDao;
+    private final ICRUDDao<Schedule> scheduleDao;
 
     private final IUserService userService;
 
-    public ScheduleService(IScheduleDao scheduleDao,
+    public ScheduleService(ICRUDDao<Schedule> scheduleDao,
                            IUserService userService) {
         this.scheduleDao = scheduleDao;
         this.userService = userService;
@@ -119,7 +116,12 @@ public class ScheduleService implements IScheduleService {
 
     @Override
     public boolean exists(UUID uuid) {
-        return this.scheduleDao.exists(uuid);
+        try {
+            this.scheduleDao.get(uuid).orElseThrow();
+            return true;
+        } catch (NoSuchElementException ex) {
+            return false;
+        }
     }
 
     private void validate(ScheduleCreateDto scheduleCreateDto) {
