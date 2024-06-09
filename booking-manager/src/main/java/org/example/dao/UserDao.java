@@ -6,36 +6,64 @@ import org.example.core.entity.User;
 import org.example.core.enums.ErrorType;
 import org.example.core.enums.UserRole;
 import org.example.core.util.NullCheckUtil;
+import org.example.dao.api.ICRUDDao;
 import org.example.dao.api.IDataBaseConnection;
-import org.example.dao.api.ISupplyDao;
-import org.example.dao.api.IUserDao;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
 import org.example.dao.exceptions.ReceivingDBDataException;
 import org.example.dao.exceptions.UpdatingDBDataException;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
 
-public class UserDao implements IUserDao {
+public class UserDao implements ICRUDDao<User> {
 
     private static final String USER_TABLE_NAME = "app.users";
 
+    private static final String SUPPLY_TABLE_NAME = "app.supply";
+
     private static final String USERS_SUPPLY_TABLE_NAME = "app.users_supply";
+
+    private static final String USERS_UUID_COLUMN_NAME = "users.uuid";
 
     private static final String UUID_COLUMN_NAME = "uuid";
 
     private static final String NAME_COLUMN_NAME = "name";
 
+    private static final String DT_CREATE_COLUMN_NAME = "dt_create";
+
+    private static final String DT_UPDATE_COLUMN_NAME = "dt_update";
+
+    private static final String USERS_NAME_COLUMN_NAME = "users.name";
+
     private static final String PHONE_NUMBER_COLUMN_NAME = "phone_number";
 
     private static final String USER_ROLE_COLUMN_NAME = "role";
 
-    private static final String DT_CREATE_COLUMN_NAME = "dt_create";
+    private static final String USERS_DT_CREATE_COLUMN_NAME = "users.dt_create";
 
-    private static final String DT_UPDATE_COLUMN_NAME = "dt_update";
+    private static final String USERS_DT_UPDATE_COLUMN_NAME = "users.dt_update";
+
+    private static final String SUPPLY_UUID_COLUMN_NAME = "supply.uuid";
+
+    private static final String SUPPLY_NAME_COLUMN_NAME = "supply.name";
+
+    private static final String ALIAS_SUPPLY_NAME_COLUMN_NAME = "s_name";
+
+    private static final String PRICE_COLUMN_NAME = "price";
+
+    private static final String DURATION_COLUMN_NAME = "duration";
+
+    private static final String SUPPLY_DT_CREATE_COLUMN_NAME = "supply.dt_create";
+
+    private static final String ALIAS_SUPPLY_DT_CREATE_COLUMN_NAME = "s_dt_create";
+
+    private static final String SUPPLY_DT_UPDATE_COLUMN_NAME = "supply.dt_update";
+
+    private static final String ALIAS_SUPPLY_DT_UPDATE_COLUMN_NAME = "s_dt_update";
 
     private static final String USERS_SUPPLY_USER_COLUMN_NAME = "user_uuid";
 
@@ -53,26 +81,16 @@ public class UserDao implements IUserDao {
 
     private static final String IMPOSSIBLE_GET_USER_CAUSE_NULL = "Невозможно получить пользователя так как в качестве аргумента был передан null";
 
-    private static final String IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL = "Невозможно получить список пользователей так как в качестве аргумента был передан null";
-
     private static final String IMPOSSIBLE_SAVE_USER_CAUSE_NULL = "Невозможно создать пользователя так как в качестве аргумента был передан null";
 
     private static final String IMPOSSIBLE_UPDATE_USER_CAUSE_NULL = "Невозможно обновить пользователя так как в качестве аргумента был передан null";
 
     private static final String IMPOSSIBLE_DELETE_USER_CAUSE_NULL = "Невозможно удалить пользователя так как в качестве аргумента был передан null";
 
-    private static final String IMPOSSIBLE_CHECK_IF_EXISTS_USER_CAUSE_NULL = "Невозможно проверить существование пользователя так как в качестве аргумента был передан null";
-
-    private static final String FAIL_CHECK_IF_USER_EXISTS_MESSAGE = "Ошибка проверки существования пользователя";
-
-
-    private final ISupplyDao supplyDao;
 
     private final IDataBaseConnection dataBaseConnection;
 
-    public UserDao(ISupplyDao supplyDao,
-                   IDataBaseConnection dataBaseConnection) {
-        this.supplyDao = supplyDao;
+    public UserDao(IDataBaseConnection dataBaseConnection) {
         this.dataBaseConnection = dataBaseConnection;
     }
 
@@ -87,83 +105,6 @@ public class UserDao implements IUserDao {
             ResultSet rs = selectOnePs.executeQuery();
 
             User user = createUser(rs);
-
-            rs.close();
-
-            return Optional.ofNullable(user);
-
-        } catch (SQLException e) {
-            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_USER_MESSAGE)));
-        }
-    }
-
-    @Override
-    public List<User> get(List<UUID> uuids) {
-        if (uuids.isEmpty()) {
-            return new ArrayList<>();
-        }
-        NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL, uuids);
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement selectInUuidsPs = c.prepareStatement(createGetAccordingToUuidsSqlStatement(uuids.size()))) {
-
-            for (int i = 0; i < uuids.size(); i++) {
-                selectInUuidsPs.setObject(i + 1, uuids.get(i));
-            }
-
-            ResultSet rs = selectInUuidsPs.executeQuery();
-
-            List<User> listOfUsers = createListOfUsers(rs);
-
-            rs.close();
-
-            return listOfUsers;
-        } catch (SQLException e) {
-            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_USERS_MESSAGE)));
-        }
-    }
-
-    @Override
-    public List<User> getWithoutSupplies(List<UUID> uuids) {
-        NullCheckUtil.checkNull(IMPOSSIBLE_GET_LIST_OF_USERS_CAUSE_NULL, uuids);
-        if (uuids.isEmpty()) {
-            return new ArrayList<>();
-        }
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement selectInUuidsSuppliesFreePs = c.prepareStatement(createGetAccordingToUuidsWithoutSuppliesSqlStatement(uuids.size()))) {
-
-            for (int i = 0; i < uuids.size(); i++) {
-                selectInUuidsSuppliesFreePs.setObject(i + 1, uuids.get(i));
-            }
-
-            ResultSet rs = selectInUuidsSuppliesFreePs.executeQuery();
-
-            List<User> listOfUsers = new ArrayList<>();
-
-            while (rs.next()) {
-                listOfUsers.add(createUserWithoutSupplies(rs));
-            }
-
-            rs.close();
-
-            return listOfUsers;
-        } catch (SQLException e) {
-            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_RECEIVE_LIST_USERS_MESSAGE)));
-        }
-    }
-
-    @Override
-    public Optional<User> getWithoutSupplies(UUID uuid) {
-        NullCheckUtil.checkNull(IMPOSSIBLE_GET_USER_CAUSE_NULL, uuid);
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement selectOneSuppliesFreePs = c.prepareStatement(createGetOneByUuidWithoutSuppliesSqlStatement())) {
-
-            selectOneSuppliesFreePs.setObject(1, uuid);
-
-            ResultSet rs = selectOneSuppliesFreePs.executeQuery();
-            User user = null;
-            if (rs.next()) {
-                user = createUserWithoutSupplies(rs);
-            }
 
             rs.close();
 
@@ -206,12 +147,6 @@ public class UserDao implements IUserDao {
 
             insertUserSupplies(user, insertsUserSuppliesPS);
 
-            updateSupplies(user.getSupplies());
-
-            List<UUID> supplyUuids = user.getSupplies().stream().map(Supply::getUuid).toList();
-            List<Supply> supplies = this.supplyDao.get(supplyUuids);
-            user.setSupplies(supplies);
-
             c.commit();
 
             return user;
@@ -227,11 +162,8 @@ public class UserDao implements IUserDao {
         try (Connection c = dataBaseConnection.getConnection();
              PreparedStatement updateUserPs = c.prepareStatement(createUpdateSqlStatement());
              PreparedStatement deleteUserSuppliesPs = c.prepareStatement(createDeleteUserSuppliesSqlStatement());
-             PreparedStatement insertUserSuppliesPs = c.prepareStatement(createInsertUserSuppliesSqlStatement());
-             PreparedStatement selectUserSuppliesPs = c.prepareStatement(createGetUserSuppliesSqlStatement())) {
+             PreparedStatement insertUserSuppliesPs = c.prepareStatement(createInsertUserSuppliesSqlStatement())) {
             c.setAutoCommit(false);
-
-            List<Supply> performedSupplies = findPerformedSupplies(user, selectUserSuppliesPs);
 
             User updatedUser = updatedUser(user, updateUserPs);
 
@@ -239,49 +171,11 @@ public class UserDao implements IUserDao {
 
             insertUserSupplies(user, insertUserSuppliesPs);
 
-            updateSupplies(performedSupplies);
-
             c.commit();
 
             return updatedUser;
         } catch (SQLException e) {
             throw new UpdatingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
-        }
-    }
-
-
-    @Override
-    public void systemUpdate(User user) throws SQLException {
-        NullCheckUtil.checkNull(IMPOSSIBLE_UPDATE_USER_CAUSE_NULL, user);
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement systemUpdateUserPs = c.prepareStatement(createSystemUpdateSqlStatement())) {
-            c.setAutoCommit(false);
-
-            systemUpdateUserPs.setObject(1, user.getUuid());
-            systemUpdateUserPs.setObject(2, user.getDtUpdate());
-
-            if (systemUpdateUserPs.executeUpdate() < 1) {
-                throw new UpdatingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
-            }
-
-            c.commit();
-        }
-    }
-
-    @Override
-    public boolean exists(UUID uuid) {
-        NullCheckUtil.checkNull(IMPOSSIBLE_CHECK_IF_EXISTS_USER_CAUSE_NULL, uuid);
-        try (Connection c = dataBaseConnection.getConnection();
-             PreparedStatement existsPs = c.prepareStatement(createExistsSqlStatement())) {
-            existsPs.setObject(1, uuid);
-            ResultSet rs = existsPs.executeQuery();
-            boolean exists = false;
-            if (rs.next()) {
-                exists = rs.getBoolean(1);
-            }
-            return exists;
-        } catch (SQLException e) {
-            throw new ReceivingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_CHECK_IF_USER_EXISTS_MESSAGE)));
         }
     }
 
@@ -298,8 +192,6 @@ public class UserDao implements IUserDao {
 
             deleteUser(user, deleteUserPs);
 
-            updateSupplies(user.getSupplies());
-
             c.commit();
         } catch (SQLException e) {
             throw new DeletingDBDataException(e.getCause(), List.of(new ErrorResponse(ErrorType.ERROR, FAIL_DELETE_USER_MESSAGE)));
@@ -312,12 +204,6 @@ public class UserDao implements IUserDao {
         int userExecuteUpdate = deleteUserPs.executeUpdate();
         if (userExecuteUpdate < 1) {
             throw new DeletingDBDataException(List.of(new ErrorResponse(ErrorType.ERROR, FAIL_UPDATE_USER_MESSAGE)));
-        }
-    }
-
-    private void updateSupplies(List<Supply> user) throws SQLException {
-        for (Supply supply : user) {
-            this.supplyDao.systemUpdate(supply);
         }
     }
 
@@ -384,33 +270,6 @@ public class UserDao implements IUserDao {
         return updatedUser;
     }
 
-    private List<Supply> findPerformedSupplies(User user, PreparedStatement selectUserSuppliesPs) throws SQLException {
-        List<Supply> performedSupplies = new ArrayList<>();
-        selectUserSuppliesPs.setObject(1, user.getUuid());
-        ResultSet rs = selectUserSuppliesPs.executeQuery();
-        while (rs.next()) {
-            UUID uuid = (UUID) rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
-            performedSupplies.add(this.supplyDao.get(uuid).orElseThrow());
-        }
-        for (Supply s : user.getSupplies()) {
-            if (!performedSupplies.contains(s)) {
-                performedSupplies.add(s);
-            }
-        }
-        rs.close();
-        return performedSupplies;
-    }
-
-    private String createExistsSqlStatement() {
-        StringBuilder sb = new StringBuilder("SELECT EXISTS ( SELECT 1 FROM ");
-        sb.append(USER_TABLE_NAME);
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" = ?)");
-        return sb.toString();
-    }
-
-
     private String createInsertUserSqlStatement() {
         StringBuilder sb = new StringBuilder("INSERT INTO app.users(");
         sb.append(UUID_COLUMN_NAME);
@@ -439,104 +298,60 @@ public class UserDao implements IUserDao {
         return sb.toString();
     }
 
-    private String createGetUserSuppliesSqlStatement() {
-        StringBuilder sb = new StringBuilder("SELECT ");
-        sb.append(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
-        sb.append(" FROM ");
-        sb.append(USERS_SUPPLY_TABLE_NAME);
-        sb.append(" WHERE ");
-        sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
-        sb.append(" =?");
-        return sb.toString();
-    }
-
     private String createGetAllSqlStatement() {
         StringBuilder sb = new StringBuilder("SELECT ");
 
-        sb.append(UUID_COLUMN_NAME);
+        sb.append(USERS_UUID_COLUMN_NAME);
         sb.append(", ");
-        sb.append(NAME_COLUMN_NAME);
+        sb.append(USERS_NAME_COLUMN_NAME);
         sb.append(", ");
         sb.append(PHONE_NUMBER_COLUMN_NAME);
         sb.append(", ");
         sb.append(USER_ROLE_COLUMN_NAME);
         sb.append(", ");
-        sb.append(DT_CREATE_COLUMN_NAME);
+        sb.append(USERS_DT_CREATE_COLUMN_NAME);
         sb.append(", ");
-        sb.append(DT_UPDATE_COLUMN_NAME);
+        sb.append(USERS_DT_UPDATE_COLUMN_NAME);
         sb.append(", ");
         sb.append(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(SUPPLY_NAME_COLUMN_NAME);
+        sb.append(" AS ");
+        sb.append(ALIAS_SUPPLY_NAME_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(PRICE_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(DURATION_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(SUPPLY_DT_CREATE_COLUMN_NAME);
+        sb.append(" AS ");
+        sb.append(ALIAS_SUPPLY_DT_CREATE_COLUMN_NAME);
+        sb.append(", ");
+        sb.append(SUPPLY_DT_UPDATE_COLUMN_NAME);
+        sb.append(" AS ");
+        sb.append(ALIAS_SUPPLY_DT_UPDATE_COLUMN_NAME);
         sb.append(" FROM ");
         sb.append(USER_TABLE_NAME);
         sb.append(" LEFT JOIN ");
         sb.append(USERS_SUPPLY_TABLE_NAME);
         sb.append(" ON ");
-        sb.append(USER_TABLE_NAME);
-        sb.append(".");
-        sb.append(UUID_COLUMN_NAME);
+        sb.append(USERS_UUID_COLUMN_NAME);
         sb.append(" = ");
         sb.append(USERS_SUPPLY_TABLE_NAME);
         sb.append(".");
         sb.append(USERS_SUPPLY_USER_COLUMN_NAME);
+        sb.append(" LEFT JOIN ");
+        sb.append(SUPPLY_TABLE_NAME);
+        sb.append(" ON ");
+        sb.append(SUPPLY_UUID_COLUMN_NAME);
+        sb.append(" = ");
+        sb.append(USERS_SUPPLY_TABLE_NAME);
+        sb.append(".");
+        sb.append(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
 
 
         return sb.toString();
     }
-
-    private String createGetAllWithoutSuppliesSqlStatement() {
-        StringBuilder sb = new StringBuilder("SELECT ");
-
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(NAME_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(PHONE_NUMBER_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(USER_ROLE_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(DT_CREATE_COLUMN_NAME);
-        sb.append(", ");
-        sb.append(DT_UPDATE_COLUMN_NAME);
-        sb.append(" FROM ");
-        sb.append(USER_TABLE_NAME);
-
-        return sb.toString();
-    }
-
-    private String createGetAccordingToUuidsWithoutSuppliesSqlStatement(int number) {
-        StringBuilder sb = new StringBuilder(createGetAllWithoutSuppliesSqlStatement());
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" IN (");
-        boolean needComma = false;
-        for (int i = 0; i < number; i++) {
-            if (needComma) {
-                sb.append(", ");
-            }
-            sb.append("?");
-            needComma = true;
-        }
-        sb.append(")");
-        return sb.toString();
-    }
-
-    private String createGetAccordingToUuidsSqlStatement(int number) {
-        StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" IN (");
-        boolean needComma = false;
-        for (int i = 0; i < number; i++) {
-            if (needComma) {
-                sb.append(", ");
-            }
-            sb.append("?");
-            needComma = true;
-        }
-        sb.append(")");
-        return sb.toString();
-    }
-
 
     private String createUpdateSqlStatement() {
         StringBuilder sb = new StringBuilder("UPDATE ");
@@ -556,20 +371,6 @@ public class UserDao implements IUserDao {
         sb.append(DT_UPDATE_COLUMN_NAME);
         sb.append(" = ?");
         sb.append(" RETURNING *");
-        return sb.toString();
-    }
-
-    private String createSystemUpdateSqlStatement() {
-        StringBuilder sb = new StringBuilder("UPDATE ");
-        sb.append(USER_TABLE_NAME);
-        sb.append(" SET ");
-        sb.append(DT_UPDATE_COLUMN_NAME);
-        sb.append(" = NOW()");
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" = ? AND ");
-        sb.append(DT_UPDATE_COLUMN_NAME);
-        sb.append(" = ?");
         return sb.toString();
     }
 
@@ -596,15 +397,7 @@ public class UserDao implements IUserDao {
     private String createGetOneByUuidSqlStatement() {
         StringBuilder sb = new StringBuilder(createGetAllSqlStatement());
         sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
-        sb.append(" = ?");
-        return sb.toString();
-    }
-
-    private String createGetOneByUuidWithoutSuppliesSqlStatement() {
-        StringBuilder sb = new StringBuilder(createGetAllWithoutSuppliesSqlStatement());
-        sb.append(" WHERE ");
-        sb.append(UUID_COLUMN_NAME);
+        sb.append(USERS_UUID_COLUMN_NAME);
         sb.append(" = ?");
         return sb.toString();
     }
@@ -612,15 +405,11 @@ public class UserDao implements IUserDao {
     private List<User> createListOfUsers(ResultSet rs) throws SQLException {
         Map<UUID, User> uuidUserMap = new HashMap<>();
         while (rs.next()) {
-            UUID uuid = (UUID) rs.getObject(UUID_COLUMN_NAME);
+            UUID uuid = rs.getObject(UUID_COLUMN_NAME, UUID.class);
 
             User user = uuidUserMap.getOrDefault(uuid, createUserWithoutSupplies(rs));
 
-            Object rawUuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
-            if (rawUuid != null) {
-                UUID supplyUuid = (UUID) rawUuid;
-                user.getSupplies().add(this.supplyDao.getWithoutMasters(supplyUuid).orElseThrow());
-            }
+            user.getSupplies().add(createSupply(rs));
 
             uuidUserMap.put(uuid, user);
         }
@@ -646,10 +435,20 @@ public class UserDao implements IUserDao {
             }
             UUID supplyUuid = rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME, UUID.class);
             if (supplyUuid != null) {
-                user.getSupplies().add(this.supplyDao.getWithoutMasters(supplyUuid).orElseThrow());
+                user.getSupplies().add(createSupply(rs));
             }
         }
         return user;
+    }
+
+    private Supply createSupply(ResultSet rs) throws SQLException {
+        UUID uuid = (UUID) rs.getObject(USERS_SUPPLY_SUPPLY_COLUMN_NAME);
+        String name = rs.getString(ALIAS_SUPPLY_NAME_COLUMN_NAME);
+        BigDecimal price = rs.getBigDecimal(PRICE_COLUMN_NAME);
+        Integer duration = (Integer) rs.getObject(DURATION_COLUMN_NAME);
+        LocalDateTime dtCreate = rs.getTimestamp(ALIAS_SUPPLY_DT_CREATE_COLUMN_NAME).toLocalDateTime();
+        LocalDateTime dtUpdate = rs.getTimestamp(ALIAS_SUPPLY_DT_UPDATE_COLUMN_NAME).toLocalDateTime();
+        return new Supply(uuid, name, price, duration, new ArrayList<>(), dtCreate, dtUpdate);
     }
 
 }
