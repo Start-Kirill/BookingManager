@@ -5,7 +5,7 @@ import org.example.core.entity.Supply;
 import org.example.core.entity.User;
 import org.example.core.enums.UserRole;
 import org.example.core.exceptions.NullArgumentException;
-import org.example.dao.api.ISupplyDao;
+import org.example.dao.api.ICRUDDao;
 import org.example.service.api.IUserService;
 import org.example.service.exceptions.InvalidSupplyBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
 class SupplyServiceTest {
 
     @Mock
-    private ISupplyDao supplyDao;
+    private ICRUDDao<Supply> supplyDao;
 
     @Mock
     private IUserService userService;
@@ -66,17 +66,16 @@ class SupplyServiceTest {
     @Test
     void shouldGetByUuid() {
         when(supplyDao.get(uuid)).thenReturn(Optional.of(supply));
-        when(supplyDao.exists(uuid)).thenReturn(true);
 
         Supply result = supplyService.get(uuid);
 
         assertEquals(supply, result);
-        verify(supplyDao).get(uuid);
+        verify(supplyDao, times(2)).get(uuid);
     }
 
     @Test
     void shouldThrowWhileGetByUuid() {
-        when(supplyDao.exists(uuid)).thenReturn(false);
+        when(supplyDao.get(uuid)).thenReturn(Optional.empty());
 
         assertThrows(SuchElementNotExistsException.class, () -> this.supplyService.get(uuid));
     }
@@ -106,39 +105,37 @@ class SupplyServiceTest {
     void shouldGetListByList() {
         List<Supply> supplyList = List.of(supply);
         List<UUID> uuids = List.of(supply.getUuid());
-        when(supplyDao.exists(supply.getUuid())).thenReturn(true);
-        when(supplyDao.get(uuids)).thenReturn(supplyList);
+        when(supplyDao.get(supply.getUuid())).thenReturn(Optional.of(supply));
 
         List<Supply> result = this.supplyService.get(uuids);
 
         assertEquals(supplyList, result);
-        verify(supplyDao, times(1)).exists(supply.getUuid());
-        verify(supplyDao, times(1)).get(uuids);
+        verify(supplyDao, times(2)).get(supply.getUuid());
     }
 
     @Test
     void shouldThrowWhileGetListByList() {
         List<UUID> uuids = List.of(supply.getUuid());
-        when(supplyDao.exists(supply.getUuid())).thenReturn(false);
+        when(supplyDao.get(supply.getUuid())).thenReturn(Optional.empty());
 
         assertThrows(SuchElementNotExistsException.class, () -> this.supplyService.get(uuids));
-        verify(supplyDao, times(1)).exists(supply.getUuid());
+        verify(supplyDao, times(1)).get(supply.getUuid());
     }
 
     @Test
     void shouldExists() {
-        when(supplyDao.exists(supply.getUuid())).thenReturn(true);
+        when(supplyDao.get(supply.getUuid())).thenReturn(Optional.of(supply));
 
         assertTrue(supplyService.exists(supply.getUuid()));
-        verify(supplyDao, times(1)).exists(supply.getUuid());
+        verify(supplyDao, times(1)).get(supply.getUuid());
     }
 
     @Test
     void shouldNotExists() {
-        when(supplyDao.exists(supply.getUuid())).thenReturn(false);
+        when(supplyDao.get(supply.getUuid())).thenReturn(Optional.empty());
 
         assertFalse(supplyService.exists(supply.getUuid()));
-        verify(supplyDao, times(1)).exists(supply.getUuid());
+        verify(supplyDao, times(1)).get(supply.getUuid());
     }
 
     @ParameterizedTest
@@ -193,7 +190,6 @@ class SupplyServiceTest {
         when(supplyDao.get(uuid)).thenReturn(Optional.of(supply));
         lenient().when(userService.get(anyList())).thenReturn(supply.getMasters());
         when(supplyDao.update(any(Supply.class))).thenReturn(supply);
-        when(supplyDao.exists(supply.getUuid())).thenReturn(true);
 
         Supply result = this.supplyService.update(supplyCreateDto, supply.getUuid(), supply.getDtUpdate());
 
@@ -233,7 +229,6 @@ class SupplyServiceTest {
     @Test
     void shouldThrowWhileUpdateNotUpToDatedObject() {
         LocalDateTime dtUpdate = LocalDateTime.now().minusDays(1);
-        when(supplyDao.exists(uuid)).thenReturn(true);
         when(supplyDao.get(uuid)).thenReturn(Optional.of(supply));
 
         assertThrows(ObjectNotUpToDatedException.class, () -> supplyService.update(supplyCreateDto, uuid, dtUpdate));
@@ -252,7 +247,6 @@ class SupplyServiceTest {
     void shouldThrowWhileDeleteNotUpToDatedObject() {
         UUID uuid = supply.getUuid();
         LocalDateTime dtUpdate = LocalDateTime.now().minusDays(1);
-        when(supplyDao.exists(uuid)).thenReturn(true);
         when(supplyDao.get(uuid)).thenReturn(Optional.of(supply));
 
         assertThrows(ObjectNotUpToDatedException.class, () -> supplyService.delete(uuid, dtUpdate));

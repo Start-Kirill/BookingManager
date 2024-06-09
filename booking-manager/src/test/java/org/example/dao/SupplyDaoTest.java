@@ -60,10 +60,8 @@ class SupplyDaoTest {
         config.setPassword(postgres.getPassword());
         config.setMaximumPoolSize(2);
         DataBaseConnection dataBaseConnection = new DataBaseConnection(new HikariDataSource(config));
-
         supplyDao = new SupplyDao(dataBaseConnection);
-        userDao = new UserDao(supplyDao, dataBaseConnection);
-        supplyDao.setUserDao(userDao);
+        userDao = new UserDao(dataBaseConnection);
         try (Connection connection = dataBaseConnection.getConnection();
              Statement statement = connection.createStatement()) {
             statement.execute("TRUNCATE TABLE app.supply RESTART IDENTITY CASCADE");
@@ -99,32 +97,6 @@ class SupplyDaoTest {
     }
 
     @Test
-    void shouldGetByListUuidProperly() {
-        supplyDao.save(supplyOne);
-        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
-        supplyTwo.setMasters(List.of(updatedMaster));
-        supplyDao.save(supplyTwo);
-
-        List<UUID> supplyUuids = List.of(supplyOne.getUuid(), supplyTwo.getUuid());
-
-        List<Supply> supplies = this.supplyDao.get(supplyUuids);
-        assertEquals(2, supplies.size());
-    }
-
-    @Test
-    void shouldGetByEmptyListUuidProperly() {
-        supplyDao.save(supplyOne);
-        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
-        supplyTwo.setMasters(List.of(updatedMaster));
-        supplyDao.save(supplyTwo);
-
-        List<UUID> supplyUuids = new ArrayList<>();
-
-        List<Supply> supplies = this.supplyDao.get(supplyUuids);
-        assertEquals(0, supplies.size());
-    }
-
-    @Test
     void shouldGetByUuidProperly() {
         supplyDao.save(supplyOne);
         User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
@@ -140,26 +112,6 @@ class SupplyDaoTest {
     void shouldThrowWhileGetByWrongUuid() {
         supplyDao.save(supplyOne);
         Optional<Supply> supplyOptional = this.supplyDao.get(UUID.randomUUID());
-
-        assertThrows(NoSuchElementException.class, supplyOptional::orElseThrow);
-    }
-
-    @Test
-    void shouldGetByUuidWithoutMasterProperly() {
-        supplyDao.save(supplyOne);
-        User updatedMaster = this.userDao.get(master.getUuid()).orElseThrow();
-        supplyTwo.setMasters(List.of(updatedMaster));
-        supplyDao.save(supplyTwo);
-
-        Supply supply = this.supplyDao.getWithoutMasters(supplyOne.getUuid()).orElseThrow();
-
-        assertEquals(supplyOne, supply);
-    }
-
-    @Test
-    void shouldThrowWhileGetByWrongUuidWithoutMaster() {
-        supplyDao.save(supplyOne);
-        Optional<Supply> supplyOptional = this.supplyDao.getWithoutMasters(UUID.randomUUID());
 
         assertThrows(NoSuchElementException.class, supplyOptional::orElseThrow);
     }
@@ -223,30 +175,6 @@ class SupplyDaoTest {
         this.supplyDao.save(supplyOne);
         supplyTwo.setName(supplyOne.getName());
         assertThrows(CreatingDBDataException.class, () -> supplyDao.save(supplyTwo));
-    }
-
-    @Test
-    void shouldSystemUpdateProperly() {
-        this.supplyDao.save(supplyOne);
-        assertDoesNotThrow(() -> this.supplyDao.systemUpdate(supplyOne));
-    }
-
-    @Test
-    void shouldThrowWhileSystemUpdateNotExistedSupply() {
-        this.supplyDao.save(supplyOne);
-        assertThrows(UpdatingDBDataException.class, () -> this.supplyDao.systemUpdate(supplyTwo));
-    }
-
-    @Test
-    void shouldExists() {
-        this.supplyDao.save(supplyOne);
-        assertTrue(this.supplyDao.exists(supplyOne.getUuid()));
-    }
-
-    @Test
-    void shouldNotExists() {
-        this.supplyDao.save(supplyOne);
-        assertFalse(this.supplyDao.exists(supplyTwo.getUuid()));
     }
 
     @Test

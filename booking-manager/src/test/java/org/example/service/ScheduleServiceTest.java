@@ -5,7 +5,7 @@ import org.example.core.entity.Schedule;
 import org.example.core.entity.User;
 import org.example.core.enums.UserRole;
 import org.example.core.exceptions.NullArgumentException;
-import org.example.dao.api.IScheduleDao;
+import org.example.dao.api.ICRUDDao;
 import org.example.service.api.IUserService;
 import org.example.service.exceptions.InvalidScheduleBodyException;
 import org.example.service.exceptions.ObjectNotUpToDatedException;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 class ScheduleServiceTest {
 
     @Mock
-    private IScheduleDao scheduleDao;
+    private ICRUDDao<Schedule> scheduleDao;
 
     @Mock
     private IUserService userService;
@@ -62,17 +62,16 @@ class ScheduleServiceTest {
     @Test
     void shouldGetByUuid() {
         when(scheduleDao.get(uuid)).thenReturn(Optional.of(schedule));
-        when(scheduleDao.exists(uuid)).thenReturn(true);
 
         Schedule result = scheduleService.get(uuid);
 
         assertEquals(schedule, result);
-        verify(scheduleDao).get(uuid);
+        verify(scheduleDao, times(2)).get(uuid);
     }
 
     @Test
     void shouldThrowWhileGetByUuid() {
-        when(scheduleDao.exists(uuid)).thenReturn(false);
+        when(scheduleDao.get(uuid)).thenReturn(Optional.empty());
 
         assertThrows(SuchElementNotExistsException.class, () -> this.scheduleService.get(uuid));
     }
@@ -95,18 +94,18 @@ class ScheduleServiceTest {
 
     @Test
     void shouldExists() {
-        when(scheduleDao.exists(schedule.getUuid())).thenReturn(true);
+        when(scheduleDao.get(schedule.getUuid())).thenReturn(Optional.of(schedule));
 
         assertTrue(scheduleService.exists(schedule.getUuid()));
-        verify(scheduleDao, times(1)).exists(schedule.getUuid());
+        verify(scheduleDao, times(1)).get(schedule.getUuid());
     }
 
     @Test
     void shouldNotExists() {
-        when(scheduleDao.exists(schedule.getUuid())).thenReturn(false);
+        when(scheduleDao.get(schedule.getUuid())).thenReturn(Optional.empty());
 
         assertFalse(scheduleService.exists(schedule.getUuid()));
-        verify(scheduleDao, times(1)).exists(schedule.getUuid());
+        verify(scheduleDao, times(1)).get(schedule.getUuid());
     }
 
     @ParameterizedTest
@@ -157,7 +156,6 @@ class ScheduleServiceTest {
         when(userService.get(any(UUID.class))).thenReturn(master);
         when(scheduleDao.update(any(Schedule.class))).thenReturn(schedule);
         when(scheduleDao.get(any(UUID.class))).thenReturn(Optional.of(schedule));
-        when(scheduleDao.exists(any(UUID.class))).thenReturn(true);
 
         LocalDateTime dtStart = "null".equals(rawDtStart) ? null : schedule.getDtStart();
         LocalDateTime dtEnd = "null".equals(rawDtEnd) ? null : schedule.getDtEnd();
@@ -207,7 +205,6 @@ class ScheduleServiceTest {
     @Test
     void shouldThrowWhileUpdateNotUpToDatedObject() {
         LocalDateTime dtUpdate = LocalDateTime.now().minusDays(1);
-        when(scheduleDao.exists(uuid)).thenReturn(true);
         when(scheduleDao.get(uuid)).thenReturn(Optional.of(schedule));
 
         assertThrows(ObjectNotUpToDatedException.class, () -> scheduleService.update(scheduleCreateDto, uuid, dtUpdate));
@@ -225,7 +222,6 @@ class ScheduleServiceTest {
     @Test
     void shouldThrowWhileDeleteNotUpToDatedObject() {
         LocalDateTime dtUpdate = LocalDateTime.now().minusDays(1);
-        when(scheduleDao.exists(uuid)).thenReturn(true);
         when(scheduleDao.get(uuid)).thenReturn(Optional.of(schedule));
 
         assertThrows(ObjectNotUpToDatedException.class, () -> scheduleService.delete(uuid, dtUpdate));

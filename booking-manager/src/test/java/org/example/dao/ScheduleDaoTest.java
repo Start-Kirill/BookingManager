@@ -6,8 +6,6 @@ import org.example.core.entity.Schedule;
 import org.example.core.entity.User;
 import org.example.core.enums.UserRole;
 import org.example.core.exceptions.NullArgumentException;
-import org.example.dao.api.IScheduleDao;
-import org.example.dao.api.IUserDao;
 import org.example.dao.ds.DataBaseConnection;
 import org.example.dao.exceptions.CreatingDBDataException;
 import org.example.dao.exceptions.DeletingDBDataException;
@@ -29,9 +27,9 @@ class ScheduleDaoTest {
             "postgres:15-alpine"
     );
 
-    IUserDao userDao;
+    UserDao userDao;
 
-    IScheduleDao scheduleDao;
+    ScheduleDao scheduleDao;
 
     User masterOne = new User(UUID.randomUUID(), "Kirill", "+13456789", UserRole.MASTER, new ArrayList<>(), LocalDateTime.now(), LocalDateTime.now());
 
@@ -59,7 +57,7 @@ class ScheduleDaoTest {
         config.setPassword(postgres.getPassword());
         config.setMaximumPoolSize(2);
         DataBaseConnection dataBaseConnection = new DataBaseConnection(new HikariDataSource(config));
-        userDao = new UserDao(new SupplyDao(dataBaseConnection), dataBaseConnection);
+        userDao = new UserDao(dataBaseConnection);
         scheduleDao = new ScheduleDao(userDao, dataBaseConnection);
         try (Connection connection = dataBaseConnection.getConnection();
              Statement statement = connection.createStatement()) {
@@ -319,15 +317,4 @@ class ScheduleDaoTest {
         assertThrows(DeletingDBDataException.class, () -> this.scheduleDao.delete(scheduleOne));
     }
 
-    @Test
-    void shouldExists() {
-        this.scheduleDao.save(scheduleOne);
-        assertTrue(this.scheduleDao.exists(scheduleOne.getUuid()));
-    }
-
-    @Test
-    void shouldNotExists() {
-        this.scheduleDao.save(scheduleOne);
-        assertFalse(this.scheduleDao.exists(scheduleTwo.getUuid()));
-    }
 }
